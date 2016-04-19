@@ -1,4 +1,4 @@
-# EVPGLIB
+# VPGLIB
 
 Based on Opencv library and was designed for one special purpose - to measure heart rate from face video.
 Pay attention that ordinary PC is not certified as measurement tool, so measurement
