@@ -1,14 +1,16 @@
 TEMPLATE = lib
-TARGET = vpg
+
+CONFIG(release, debug|release) {
+    TARGET = vpg
+} else {
+    TARGET = vpgd
+}
 
 SOURCES += vpg.cpp
 
 HEADERS += vpg.h
 
-INCLUDEPATH += $${PWD}/../../src
-
 include(opencv.pri)
-LIBS += -ladvapi32
 
 #---------------------------------------------------------
 DEFINES += DLL_BUILD_SETUP # is defined only if library build (for dll generation)

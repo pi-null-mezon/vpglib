@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
     double Tovms = 10000.0;
     double dTms = 33.0;
-    vpg::PulseProcessor *proc = new vpg::PulseProcessor(6000.0, dTms, vpg::PulseProcessor::HeartRate);
+    vpg::PulseProcessor *proc = new vpg::PulseProcessor(7000.0, dTms, vpg::PulseProcessor::HeartRate);
 
     double sV = 0.0;
     double f0 = 0.8;
@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
         for(uint j = 0; j < Tovms/dTms; j++) {
             sV = std::sin( 2 * PI * f * j * dTms/1000.0 + 1.34) + 1.0;
             proc->update( sV, dTms );
-            if(j % 200 == 0) {
-                meas = proc->computeHR();
+            if(j % 100 == 0) {
+                meas = proc->computeFrequency();
                 std::cout << "Measurement:\t"
                           << meas << " bpm,\terr: "
                           << (int)std::abs(meas - f*60.0) << " bpm\n";

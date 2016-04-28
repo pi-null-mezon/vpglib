@@ -33,7 +33,7 @@ PulseProcessor::PulseProcessor(double dT_ms, ProcessType type)
             __init((int)(7000.0/dT_ms), dT_ms, type);
             break;
         case BreathRate:
-        __init((int)(15000.0/dT_ms), dT_ms, type);
+            __init((int)(14000.0/dT_ms), dT_ms, type);
             break;
     }
 }
@@ -58,6 +58,7 @@ void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
             break;
         case BreathRate:
             m_Frequency = 16;
+            m_interval = getLength()/4;
             m_bottomFrequencyLimit = 0.2;
             m_topFrequencyLimit = 0.7;
             break;
@@ -119,7 +120,7 @@ void PulseProcessor::update(double value, double time)
     curpos = (++curpos) % m_length;
 }
 
-int PulseProcessor::computeHR()
+int PulseProcessor::computeFrequency()
 {
     double time = 0.0;
     for (int i = 0; i < m_length; i++) {
@@ -175,13 +176,13 @@ int PulseProcessor::computeHR()
     if(snr > 2.0)
         m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
-    if(m_Frequency > 150.0)
+    /*if(m_Frequency > 150.0)
         m_interval = 11;
     else if(m_Frequency > 110.0)
         m_interval = 13;
     else if(m_Frequency > 70.0)
         m_interval = 15;
-    else m_interval = 17;
+    else m_interval = 17;*/
 
     return (int)m_Frequency;
 }
@@ -211,7 +212,6 @@ int PulseProcessor::__seek(int d) const
 
 #define FACE_PROCESSOR_LENGTH 16
 
-
 FaceProcessor::FaceProcessor(const std::string &filename)
 {
     __init();
@@ -228,7 +228,9 @@ void FaceProcessor::__init()
     v_rects = new cv::Rect[FACE_PROCESSOR_LENGTH];
     m_pos = 0;
     m_nofaceframes = 0;
-    f_firstface = true;    
+    f_firstface = true;
+    m_minFaceSize = cv::Size(100,100);
+    m_blurSize = cv::Size(5,5);
 }
 
 FaceProcessor::~FaceProcessor()
@@ -236,17 +238,29 @@ FaceProcessor::~FaceProcessor()
     delete[] v_rects;
 }
 
-void FaceProcessor::enrollImage(const cv::Mat &rgb, double &resV, double &resT)
+void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &resT)
 {
     if(f_firstface)
         m_markTime = cv::getTickCount();
-    cv::Mat gray;
-    cv::cvtColor(rgb, gray, CV_BGR2GRAY);
-    cv::equalizeHist(gray, gray);
+
+    cv::Mat img;
+    double scaleX = 1.0, scaleY = 1.0;
+    if(rgbImage.cols > 640 || rgbImage.rows > 480) {
+        if( ((float)rgbImage.cols/rgbImage.rows) > 14.0/9.0 ) {
+            cv::resize(rgbImage, img, cv::Size(640, 360), 0.0, 0.0, CV_INTER_AREA);
+            scaleX = (double)rgbImage.cols / 640.0;
+            scaleY = (double)rgbImage.rows / 360.0;
+        } else {
+            cv::resize(rgbImage, img, cv::Size(640, 480), 0.0, 0.0, CV_INTER_AREA);
+            scaleX = (double)rgbImage.cols / 640.0;
+            scaleY = (double)rgbImage.rows / 480.0;
+        }
+    } else
+        img = rgbImage;
+
     std::vector<cv::Rect> faces;
-    m_classifier.detectMultiScale(gray, faces, 1.1, 5,
-                                  cv::CASCADE_FIND_BIGGEST_OBJECT,
-                                  cv::Size(80, 100));
+    m_classifier.detectMultiScale(img, faces, 1.1, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
+
     if(faces.size() > 0) {
         __updateRects(faces[0]);
         m_nofaceframes = 0;
@@ -258,46 +272,49 @@ void FaceProcessor::enrollImage(const cv::Mat &rgb, double &resV, double &resT)
             __updateRects(cv::Rect(0,0,0,0));
         }
     }
-    cv::Rect faceRect = getFaceRect() & cv::Rect(0,0,rgb.cols, rgb.rows);
 
-    unsigned int W = faceRect.width;
-    unsigned int H = faceRect.height;
-    unsigned int dX = W/16;
-    unsigned int dY = H/30;
+    cv::Rect tempRect = __getMeanRect();
+    m_faceRect = cv::Rect(tempRect.x*scaleX, tempRect.y*scaleY, tempRect.width*scaleX, tempRect.height*scaleY)
+                    & cv::Rect(0, 0, rgbImage.cols, rgbImage.rows);
+
+    unsigned int W = m_faceRect.width;
+    unsigned int H = m_faceRect.height;
     unsigned long green = 0;
     unsigned long area = 0;
 
-    if(faceRect.area() > 0 && m_nofaceframes < FACE_PROCESSOR_LENGTH) {
-            cv::Mat region = cv::Mat(rgb, faceRect).clone();
-            cv::blur(region,region, cv::Size(4,4));
+    if(m_faceRect.area() > 0 && m_nofaceframes < FACE_PROCESSOR_LENGTH) {
+            cv::Mat region = cv::Mat(rgbImage, m_faceRect).clone();
+            cv::blur(region,region, m_blurSize);
+            unsigned int dX = W / 16;
+            unsigned int dY = H / 30;
             m_ellRect = cv::Rect(dX, -6 * dY, W - 2 * dX, H + 6 * dY);
             uint X = m_ellRect.x;
             W = m_ellRect.width;
-            unsigned char *p;
+            unsigned char *ptr;
             unsigned char tR = 0, tG = 0, tB = 0;
             for(unsigned int j = 0; j < H; j++) {
-                p = region.ptr(j);
+                ptr = region.ptr(j);
                 for(unsigned int i = X; i < X + W; i++) {
-                    tB = p[3*i];
-                    tG = p[3*i+1];
-                    tR = p[3*i+2];
+                    tB = ptr[3*i];
+                    tG = ptr[3*i+1];
+                    tR = ptr[3*i+2];
                     if( __skinColor(tR, tG, tB) && __insideEllipse(i, j)) {
                         area++;
                         green += tG;
-                    }
+                    }                   
                 }
             }
         }
 
     resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
-    if(area > 5000)
+    if(area > m_minFaceSize.area()/2)
         resV = (double)green / area;
     else
         resV = 0.0;
 }
 
-cv::Rect FaceProcessor::getFaceRect() const
+cv::Rect FaceProcessor::__getMeanRect() const
 {
     double x = 0.0, y = 0.0, w = 0.0, h = 0.0;
     for(int i = 0; i < FACE_PROCESSOR_LENGTH; i++) {
@@ -342,10 +359,15 @@ bool FaceProcessor::__insideEllipse(int x, int y) const
 
 bool FaceProcessor::__skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const
 {
-    if( (vR > 95) && (vR > vG) && (vG > 40) && (vB > 20) && ((vR - min(vG,vB)) > 7) && ((vR - vG) > 7) )
+    if( (vR > 95) && (vR > vG) && (vG > 40) && (vB > 20) && ((vR - min(vG,vB)) > 5) && ((vR - vG) > 5) )
         return true;
     else
         return false;
+}
+
+cv::Rect FaceProcessor::getFaceRect() const
+{
+    return m_faceRect;
 }
 //------------------------------End of FaceProcessor--------------------------------
 } // end of namespace vpg

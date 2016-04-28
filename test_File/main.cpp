@@ -58,10 +58,7 @@ int main(int argc, char *argv[])
     cv::Mat frame;
     while(true) {
         if(capture.read(frame)) {
-            if(frame.rows > 720 && frame.cols > 1280) {
-                cv::resize(frame, frame, cv::Size(800, 450), 0.0, 0.0, CV_INTER_AREA);
-            }
-            //frame.convertTo(frame, -1, 1.0, 35.0); // adjust brightness by means of fourth arg
+            //frame.convertTo(frame, -1, 1.0, 35.0); // brightness adjust for skin detector
             faceproc.enrollImage(frame, s, t);
             pulseproc.update(s,framePeriod);
             cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(255,255,255));
@@ -73,7 +70,7 @@ int main(int argc, char *argv[])
         }
         std::printf("Frames last %d, signal value: %.1f, proc.time: %.1f\n", totalFrames - k, s, t);
         if(k % (uint)(1000.0/framePeriod) == 0) {
-            heartRate = pulseproc.computeHR();
+            heartRate = pulseproc.computeFrequency();
             if(heartRate > 0)
                 std::printf("\nHR measurement: %d bpm\n\n", heartRate);
             else
@@ -87,7 +84,7 @@ int main(int argc, char *argv[])
                 ofstream << "Collect data\n";
         }
         k++;
-        int c = cv::waitKey(1); // because image processing takes approximatelly 15.0 ms, so delay should be shorter here
+        int c = cv::waitKey(1);
         if( (char)c == 'x' )
             break;
     }

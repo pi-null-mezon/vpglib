@@ -68,28 +68,28 @@ public:
     /**
      * Class destructor
      */
-    virtual         ~PulseProcessor();
+    virtual ~PulseProcessor();
     /**
      * Update pulsogramm by one count
      * @param value - count value
      * @param time - count measurement time in millisecond
      */
-    void            update(double value, double time);
+    void update(double value, double time);
     /**
      * Compute heart rate
      * @return heart rate in beats per minute
      */
-    int             computeHR();  
+    int computeFrequency();
     /**
      * Get signal length
      * @return signal length
      */
-    int             getLength() const;
+    int getLength() const;
     /**
      * @Get pointer to signal counts
      * @return pointer to data
      */
-    const double    *getSignal() const;    
+    const double *getSignal() const;
 
 private:
     double *v_raw;
@@ -131,25 +131,25 @@ public:
     /**
      * Class destructor
      */
-    virtual     ~FaceProcessor();
+    virtual ~FaceProcessor();
     /**
      * Enroll image to produce PPG-signal count
      * @param rgb - input image, BGR format only
      * @param resV - where result count should be written
      * @param resT - where processing time should be written
      */
-    void        enrollImage(const cv::Mat &rgb, double &resV, double &resT);
+    void enrollImage(const cv::Mat &rgbImage, double &resV, double &resT);
     /**
      * Get cv::Rect that bounds face on image
      * @return coordinates of face on image in cv::Rect form
      */
-    cv::Rect    getFaceRect() const;
+    cv::Rect getFaceRect() const;
     /**
      * Load cv::CascadeClassifier face pattern from a file
      * @param filename - name of file for cv::CascadeClassifier class
      * @return was file loaded or not
      */
-    bool        loadClassifier(const std::string &filename);
+    bool loadClassifier(const std::string &filename);
 
 private:
     cv::CascadeClassifier m_classifier;
@@ -159,7 +159,11 @@ private:
     unsigned int m_pos;
     uchar m_nofaceframes;
     bool f_firstface;
+    cv::Rect m_faceRect;
+    cv::Size m_minFaceSize;
+    cv::Size m_blurSize;
 
+    cv::Rect __getMeanRect() const;
     void __updateRects(const cv::Rect &rect);
     bool __insideEllipse(int x, int y) const;
     bool __skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const;
