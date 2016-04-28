@@ -1,3 +1,11 @@
+defineReplace(qtLibraryName) {
+   unset(LIBRARY_NAME)
+   LIBRARY_NAME = $$1
+   CONFIG(debug, debug|release): RET = $$member(LIBRARY_NAME, 0)d
+   isEmpty(RET):RET = $$LIBRARY_NAME
+   return($$RET)
+}
+
 win32-msvc2010: COMPILER = vc10
 win32-msvc2012: COMPILER = vc11
 win32-msvc2013: COMPILER = vc12
@@ -9,6 +17,7 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
 }
 
 LIBS += -L$${PWD}/../lib/build/$${ARCHITECTURE}/$${COMPILER}
-LIBS += -lvpg
+LIBS += -l$$qtLibraryName(vpg)
+
 
 INCLUDEPATH += $${PWD}/../lib

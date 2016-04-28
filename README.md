@@ -1,9 +1,9 @@
 # VPGLIB
 
-Based on Opencv and was designed for one special purpose - to measure heart rate from face video.
+Based on Opencv and was designed for one special purpose - to measure heart rate from video of the human face.
 Pay attention that ordinary PC is not certified as measurement tool, so measurement
 error could be very high. Use it at your own risk, no warranties are granted.
-Measurement ranges from 55 bpm to 175 bpm, absolute error less than 5 bpm (compare to finger pulse oximeter).
+Measurement ranges from 55 bpm to 175 bpm, absolute error less than 5 bpm (compare to fingertip pulse oximeter).
 Warning!!! Works fine with ordinary web-cams only if face of subject is well illuminated.
 
 To work with vpg library you should provide the following dependencies: opencv
@@ -31,15 +31,15 @@ How to use:
         }
         std::printf("Frame %d, value: %.1f, time%.1f\n", k, s, t);
         if(k % 64 == 0)
-            std::printf("\nHR measurement: %d bpm\n\n", pulseproc.computeHR()); // compute and print heart rate estimation 
+            std::printf("\nHR measurement: %d bpm\n\n", pulseproc.computeFrequency()); // compute and print heart rate estimation 
         k++;
-        int c = cv::waitKey(framePeriod - 15.0); // cause image processing takes part of time
+        int c = cv::waitKey(framePeriod - 15.0); // time delay for event loop
         if( (char)c == 'x' )
             break;
     }
 	...
 	
-For more complex example see test_Device and test_File codes
+Also see test_Device and test_File
 
 Designed by Alex A. Taranov, 2015
 
