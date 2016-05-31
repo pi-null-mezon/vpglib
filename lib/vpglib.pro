@@ -11,6 +11,8 @@ SOURCES += vpg.cpp
 HEADERS += vpg.h
 
 include(opencv.pri)
+include(openmp.pri)
+#include(opencl.pri)
 
 #---------------------------------------------------------
 DEFINES += DLL_BUILD_SETUP # is defined only if library build (for dll generation)

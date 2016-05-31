@@ -292,6 +292,7 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
             W = m_ellRect.width;
             unsigned char *ptr;
             unsigned char tR = 0, tG = 0, tB = 0;
+#pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
             for(unsigned int j = 0; j < H; j++) {
                 ptr = region.ptr(j);
                 for(unsigned int i = X; i < X + W; i++) {
