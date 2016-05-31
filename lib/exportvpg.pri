@@ -1,3 +1,5 @@
+VPGLIBPATH = C:/Programming/vpglib
+
 defineReplace(qtLibraryName) {
    unset(LIBRARY_NAME)
    LIBRARY_NAME = $$1
@@ -16,8 +18,8 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x86
 }
 
-LIBS += -L$${PWD}/../lib/build/$${ARCHITECTURE}/$${COMPILER}
+LIBS += -L$${VPGLIBPATH}/lib/build/$${ARCHITECTURE}/$${COMPILER}
 LIBS += -l$$qtLibraryName(vpg)
 
 
-INCLUDEPATH += $${PWD}/../lib
+INCLUDEPATH += $${VPGLIBPATH}/lib
