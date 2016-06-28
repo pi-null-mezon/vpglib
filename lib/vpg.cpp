@@ -167,13 +167,13 @@ int PulseProcessor::computeFrequency()
         }
     }
 
-    double snr = 0.0;
+    m_snr = 0.0;
     if(signal_power > 0.01) {
-        snr = 10.0 * std::log10( signal_power / noise_power );
+        m_snr = 10.0 * std::log10( signal_power / noise_power );
         double bias = (double)i_maxpower - ( signal_moment / signal_power );
-        snr *= (1.0 / (1.0 + bias*bias));
+        m_snr *= (1.0 / (1.0 + bias*bias));
     }
-    if(snr > 2.0)
+    if(m_snr > 2.0)
         m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
     /*if(m_Frequency > 150.0)
@@ -185,6 +185,12 @@ int PulseProcessor::computeFrequency()
     else m_interval = 17;*/
 
     return (int)m_Frequency;
+}
+
+void PulseProcessor::computeFrequency(int &hrvalue, double &snrvalue)
+{
+    hrvalue = computeFrequency();
+    snrvalue = m_snr;
 }
 
 int PulseProcessor::getLength() const
