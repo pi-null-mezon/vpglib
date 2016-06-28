@@ -81,6 +81,12 @@ public:
      */
     int computeFrequency();
     /**
+     * @brief computeFrequency
+     * @param hrvalue - reference for output heart rate
+     * @param snrvalue - reference for output snr
+     */
+    void computeFrequency(int &hrvalue, double &snrvalue);
+    /**
      * Get signal length
      * @return signal length
      */
@@ -102,6 +108,7 @@ private:
     double m_bottomFrequencyLimit;
     double m_topFrequencyLimit;
     int curpos;
+    double m_snr;
     double m_Frequency;
     cv::Mat *v_data;
     cv::Mat *v_dft;
