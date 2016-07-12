@@ -4,8 +4,6 @@
 #
 #-------------------------------------------------
 
-QT       -= gui
-
 TARGET = test_Device
 CONFIG   += console
 CONFIG   -= app_bundle

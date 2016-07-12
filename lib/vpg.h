@@ -79,7 +79,7 @@ public:
      * Compute heart rate
      * @return heart rate in beats per minute
      */
-    int computeFrequency();
+    double computeFrequency();
     /**
      * @brief computeFrequency
      * @param hrvalue - reference for output heart rate

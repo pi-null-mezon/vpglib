@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         else
             ofstream << "evpg lib test\n"
                      << "Heart rate log for " << fileName.data()
-                     << "\n\nFrame,\tHR[bpm]\n";
+                     << "\n\nFrame;HR[bpm]\n";
     }
 
     vpg::FaceProcessor faceproc(std::string(OPENCV_DATA_DIR) +
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
                 std::printf("\nHR measurement: collect data\n\n", heartRate);
         }
         if(ofstream.is_open()) {
-            ofstream << k << ",\t";
+            ofstream << k << ";";
             if(heartRate > 0)
                 ofstream << heartRate << "\n";
             else

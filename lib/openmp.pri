@@ -1,10 +1,10 @@
 #CONFIG += openmp
 openmp {
     message(OpenMP enabled)
-    msvc* {
+    win32-msvc* {
         QMAKE_CXXFLAGS+= -openmp
     }
-    g++ {
+    win32-g++ {
         QMAKE_CXXFLAGS+= -fopenmp
         LIBS += -fopenmp
     }

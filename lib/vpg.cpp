@@ -53,14 +53,14 @@ void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
         case HeartRate:
             m_Frequency = 80;
             m_interval = 15;
-            m_bottomFrequencyLimit = 0.8;
-            m_topFrequencyLimit = 3.0;
+            m_bottomFrequencyLimit = 0.8; // 48 bpm
+            m_topFrequencyLimit = 3.0;    // 180 bpm
             break;
         case BreathRate:
             m_Frequency = 16;
             m_interval = getLength()/4;
-            m_bottomFrequencyLimit = 0.2;
-            m_topFrequencyLimit = 0.7;
+            m_bottomFrequencyLimit = 0.2; // 16 rpm
+            m_topFrequencyLimit = 0.7;    // 42 rpm
             break;
     }
 
@@ -71,7 +71,7 @@ void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
 
     for(int i = 0; i < m_length; i++)  {
         v_raw[i] = (double)(i % 2);
-        v_Y[i] = 0;
+        v_Y[i] = 0.0;
         v_time[i] = dT_ms;
     }
     v_X = new double[3];
@@ -115,12 +115,14 @@ void PulseProcessor::update(double value, double time)
         sko = 1.0;
     }
     v_X[__seek(curpos)] = (v_raw[curpos] - mean)/ sko;
-    v_Y[curpos] = ( v_X[__seek(curpos)] + v_X[__seek(curpos - 1)] + v_X[__seek(curpos - 2)] + v_Y[__loop(curpos - 1)] ) / 4.0;
+    //v_Y[curpos] = ( v_X[__seek(curpos)] + v_X[__seek(curpos - 1)] + v_X[__seek(curpos - 2)] + v_Y[__loop(curpos - 1)] ) / 4.0;
+    //just a litle bit faster than above, but does the same
+    v_Y[curpos] = ( v_X[0] + v_X[1] + v_X[2] + v_Y[__loop(curpos - 1)] ) / 4.0;
 
     curpos = (++curpos) % m_length;
 }
 
-int PulseProcessor::computeFrequency()
+double PulseProcessor::computeFrequency()
 {
     double time = 0.0;
     for (int i = 0; i < m_length; i++) {
@@ -174,7 +176,7 @@ int PulseProcessor::computeFrequency()
         m_snr *= (1.0 / (1.0 + bias*bias));
     }
     if(m_snr > 2.0)
-        m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
+        m_Frequency = std::round((signal_moment / signal_power) * 60000.0 / time);
 
     /*if(m_Frequency > 150.0)
         m_interval = 11;
@@ -184,7 +186,7 @@ int PulseProcessor::computeFrequency()
         m_interval = 15;
     else m_interval = 17;*/
 
-    return (int)m_Frequency;
+    return m_Frequency;
 }
 
 void PulseProcessor::computeFrequency(int &hrvalue, double &snrvalue)
@@ -216,7 +218,7 @@ int PulseProcessor::__seek(int d) const
 
 //--------------------------------FaceProcessor--------------------------------
 
-#define FACE_PROCESSOR_LENGTH 16
+#define FACE_PROCESSOR_LENGTH 25
 
 FaceProcessor::FaceProcessor(const std::string &filename)
 {
@@ -235,8 +237,8 @@ void FaceProcessor::__init()
     m_pos = 0;
     m_nofaceframes = 0;
     f_firstface = true;
-    m_minFaceSize = cv::Size(100,100);
-    m_blurSize = cv::Size(5,5);
+    m_minFaceSize = cv::Size(120,160);
+    m_blurSize = cv::Size(4,4);
 }
 
 FaceProcessor::~FaceProcessor()
@@ -280,13 +282,13 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     }
 
     cv::Rect tempRect = __getMeanRect();
-    m_faceRect = cv::Rect(tempRect.x*scaleX, tempRect.y*scaleY, tempRect.width*scaleX, tempRect.height*scaleY)
-                    & cv::Rect(0, 0, rgbImage.cols, rgbImage.rows);
+    m_faceRect = cv::Rect((int)(tempRect.x*scaleX), (int)(tempRect.y*scaleY), (int)(tempRect.width*scaleX), (int)(tempRect.height*scaleY))
+                 & cv::Rect(0, 0, rgbImage.cols, rgbImage.rows);
 
     unsigned int W = m_faceRect.width;
     unsigned int H = m_faceRect.height;
     unsigned long green = 0;
-    unsigned long area = 0;
+    long area = 0;
 
     if(m_faceRect.area() > 0 && m_nofaceframes < FACE_PROCESSOR_LENGTH) {
             cv::Mat region = cv::Mat(rgbImage, m_faceRect).clone();
@@ -315,10 +317,11 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
 
     resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
-    if(area > m_minFaceSize.area()/2)
+    if((area > m_minFaceSize.area()/2) && (area > 0)) {
         resV = (double)green / area;
-    else
+    } else {
         resV = 0.0;
+    }
 }
 
 cv::Rect FaceProcessor::__getMeanRect() const
