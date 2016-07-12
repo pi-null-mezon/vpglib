@@ -4,23 +4,18 @@
 #include "vpg.h"
 
 template<typename T>
-std::string num2str(T num)
+std::string num2str(T num, unsigned char precision=0)
 {
-    std::stringstream stream;
-    stream << num;
-    return stream.str();
-}
-
-template<typename T>
-std::string num2str(T num, unsigned char precision)
-{
-    if(sizeof(T) == sizeof(double) || sizeof(T) == sizeof(float)) {
+    if(precision > 0) {
         int _wholepart = static_cast<int>(num);
         int _remainder = static_cast<int>( (num - static_cast<T>(_wholepart)) * std::pow(10.0, precision) );
         return num2str(_wholepart) + std::string(".") + num2str(_remainder);
-    } else return num2str(num);
+    } else {
+        std::stringstream stream;
+        stream << num;
+        return stream.str();
+    }
 }
-
 
 int main(int argc, char *argv[])
 {
