@@ -8,6 +8,7 @@ INCLUDEPATH += $${OPENCV_DIR}/include
 win32-msvc2010: OPENCV_COMPILER = vc10
 win32-msvc2012: OPENCV_COMPILER = vc11
 win32-msvc2013: OPENCV_COMPILER = vc12
+win32-msvc2015: OPENCV_COMPILER = vc14
 win32-g++:      OPENCV_COMPILER = mingw
 
 #Specify the part of OpenCV path corresponding to target architecture
