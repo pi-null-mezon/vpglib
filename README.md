@@ -1,10 +1,10 @@
 # VPGLIB
 
-Based on Opencv and was designed for one special purpose - to measure heart rate from video of the human face.
+An Opencv extension library that uses digital image processing for the blood pulse extraction from video of the human face.
 Pay attention that ordinary PC is not certified as measurement tool, so measurement
-error could be very high. Use it at your own risk, no warranties are granted.
-Measurement ranges from 55 bpm to 175 bpm, absolute error less than 5 bpm (compare to fingertip pulse oximeter).
-Warning!!! Works fine with ordinary web-cams only if face of subject is well illuminated.
+error could be high. So, use it at your own risk, no warranties are granted.
+
+Works fine only if subject's face is well illuminated. HR measurement ranges from 55 bpm to 175 bpm and absolute error in most cases should be less than 5 bpm. 
 
 To work with vpg library you should provide the following dependencies: opencv
 
