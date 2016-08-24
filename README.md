@@ -40,7 +40,7 @@ if( (char)c == 'x' )
 ...
 ```
 	
-Also see test_Device and test_File
+Look library examples in dirs: test_Device and test_File
 
 Designed by Alex A. Taranov, 2015
 
