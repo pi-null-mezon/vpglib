@@ -23,6 +23,8 @@
 #define min(a,b) (((a) > (b))? (b) : (a))
 #endif
 
+#define FILTER_LENGTH 7
+
 namespace vpg {
 
 //---------------------------------PulseProcessor--------------------------------
@@ -74,8 +76,8 @@ void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
         v_Y[i] = 0.0;
         v_time[i] = dT_ms;
     }
-    v_X = new double[3];
-	for(int i = 0; i < 3; i ++) 
+    v_X = new double[FILTER_LENGTH];
+    for(int i = 0; i < FILTER_LENGTH; i ++)
 		v_X[i] = (double)i;
 
     v_data = new cv::Mat(1, m_length, CV_64F);
@@ -115,9 +117,13 @@ void PulseProcessor::update(double value, double time)
         sko = 1.0;
     }
     v_X[__seek(curpos)] = (v_raw[curpos] - mean)/ sko;
-    //v_Y[curpos] = ( v_X[__seek(curpos)] + v_X[__seek(curpos - 1)] + v_X[__seek(curpos - 2)] + v_Y[__loop(curpos - 1)] ) / 4.0;
-    //just a litle bit faster than above, but does the same
-    v_Y[curpos] = ( v_X[0] + v_X[1] + v_X[2] + v_Y[__loop(curpos - 1)] ) / 4.0;
+
+    double integral = 0.0;
+    for(int i = 0; i < FILTER_LENGTH; i++) {
+        integral += v_X[__seek(curpos - i)];
+    }
+
+    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (FILTER_LENGTH + 1);
 
     curpos = (++curpos) % m_length;
 }
@@ -178,14 +184,6 @@ double PulseProcessor::computeFrequency()
     if(m_snr > 2.0)
         m_Frequency = std::round((signal_moment / signal_power) * 60000.0 / time);
 
-    /*if(m_Frequency > 150.0)
-        m_interval = 11;
-    else if(m_Frequency > 110.0)
-        m_interval = 13;
-    else if(m_Frequency > 70.0)
-        m_interval = 15;
-    else m_interval = 17;*/
-
     return m_Frequency;
 }
 
@@ -205,6 +203,11 @@ const double * PulseProcessor::getSignal() const
     return v_Y;
 }
 
+double PulseProcessor::getSNR() const
+{
+    return m_snr;
+}
+
 
 int PulseProcessor::__loop(int d) const
 {
@@ -213,7 +216,7 @@ int PulseProcessor::__loop(int d) const
 
 int PulseProcessor::__seek(int d) const
 {
-    return ((3 + (d % 3)) % 3);
+    return ((FILTER_LENGTH + (d % FILTER_LENGTH)) % FILTER_LENGTH);
 }
 
 //--------------------------------FaceProcessor--------------------------------
@@ -237,8 +240,8 @@ void FaceProcessor::__init()
     m_pos = 0;
     m_nofaceframes = 0;
     f_firstface = true;
-    m_minFaceSize = cv::Size(120,160);
-    m_blurSize = cv::Size(4,4);
+    m_minFaceSize = cv::Size(100,120);
+    m_blurSize = cv::Size(3,3);
 }
 
 FaceProcessor::~FaceProcessor()
