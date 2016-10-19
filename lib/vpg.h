@@ -92,10 +92,15 @@ public:
      */
     int getLength() const;
     /**
-     * @Get pointer to signal counts
+     * @brief get pointer to signal counts
      * @return pointer to data
      */
     const double *getSignal() const;
+    /**
+     * @brief get snr value
+     * @return relation between pulse and noise harmonics energies
+     */
+    double getSNR() const;
 
 private:
     double *v_raw;
