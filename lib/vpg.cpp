@@ -120,10 +120,12 @@ void PulseProcessor::update(double value, double time)
 
     double integral = 0.0;
     for(int i = 0; i < FILTER_LENGTH; i++) {
-        integral += v_X[__seek(curpos - i)];
+        //integral += v_X[__seek(curpos - i)];
+        // does the same as above if we add up along whole filter length
+        integral += v_X[i];
     }
 
-    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (FILTER_LENGTH + 1);
+    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (FILTER_LENGTH + 1.0);
 
     curpos = (++curpos) % m_length;
 }
