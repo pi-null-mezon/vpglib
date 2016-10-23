@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
                     cv::putText(frame, num2str(frequency), cv::Point(101, 35), CV_FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0,0,0), 1, CV_AA);
                     cv::putText(frame, num2str(frequency), cv::Point(100, 34), CV_FONT_HERSHEY_SIMPLEX, 1.2, ( frequency > 65 && frequency < 85) ? cv::Scalar(0,230,0) : cv::Scalar(0,0,230), 1, CV_AA);
 
-                    cv::putText(frame, "snr: " + num2str(snr,2) + " dB", cv::Point(11, 51), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                    cv::putText(frame, "snr: " + num2str(snr,2) + " dB", cv::Point(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+                    cv::putText(frame, "snr: " + num2str(snr,2) + " dB", cv::Point(11, 61), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+                    cv::putText(frame, "snr: " + num2str(snr,2) + " dB", cv::Point(10, 60), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
                 }
                 cv::putText(frame, num2str(t,1) + " ms, press escape to exit", cv::Point(11, frame.rows - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
                 cv::putText(frame, num2str(t,1) + " ms, press escape to exit", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
