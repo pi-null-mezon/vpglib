@@ -53,13 +53,13 @@ void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
 
     switch(m_procType){
         case HeartRate:
-            m_Frequency = 80;
+            m_Frequency = 80.0;
             m_interval = 15;
             m_bottomFrequencyLimit = 0.8; // 48 bpm
             m_topFrequencyLimit = 3.0;    // 180 bpm
             break;
         case BreathRate:
-            m_Frequency = 16;
+            m_Frequency = 16.0;
             m_interval = getLength()/4;
             m_bottomFrequencyLimit = 0.2; // 16 rpm
             m_topFrequencyLimit = 0.7;    // 42 rpm
@@ -189,12 +189,6 @@ double PulseProcessor::computeFrequency()
     return m_Frequency;
 }
 
-void PulseProcessor::computeFrequency(int &hrvalue, double &snrvalue)
-{
-    hrvalue = computeFrequency();
-    snrvalue = m_snr;
-}
-
 int PulseProcessor::getLength() const
 {
     return m_length;
@@ -210,7 +204,6 @@ double PulseProcessor::getSNR() const
     return m_snr;
 }
 
-
 int PulseProcessor::__loop(int d) const
 {
     return ((m_length + (d % m_length)) % m_length);
@@ -220,7 +213,6 @@ int PulseProcessor::__seek(int d) const
 {
     return ((FILTER_LENGTH + (d % FILTER_LENGTH)) % FILTER_LENGTH);
 }
-
 //--------------------------------FaceProcessor--------------------------------
 
 #define FACE_PROCESSOR_LENGTH 25

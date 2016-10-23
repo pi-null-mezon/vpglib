@@ -81,12 +81,6 @@ public:
      */
     double computeFrequency();
     /**
-     * @brief computeFrequency
-     * @param hrvalue - reference for output heart rate
-     * @param snrvalue - reference for output snr
-     */
-    void computeFrequency(int &hrvalue, double &snrvalue);
-    /**
      * Get signal length
      * @return signal length
      */
