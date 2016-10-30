@@ -4,9 +4,16 @@
 #
 #-------------------------------------------------
 
-TARGET = test_Device
-CONFIG   += console
-CONFIG   -= app_bundle
+TARGET = vpglight
+VERSION = 1.0.0.0
+
+DEFINES += APP_DESIGNER=\\\"Alex.A.Taranov\\\" \
+           APP_NAME=\\\"$${TARGET}\\\" \
+           APP_VERSION=\\\"$${VERSION}\\\"
+
+CONFIG += console
+CONFIG -= app_bundle
+CONFIG -= qt
 
 TEMPLATE = app
 
@@ -14,3 +21,14 @@ SOURCES += main.cpp
 
 include($${PWD}/../lib/opencv.pri)
 include($${PWD}/../lib/exportvpg.pri)
+
+CONFIG += designbuild
+
+designbuild {
+    message(Design build mode selected)
+    DEFINES += DESIGNBUILD
+} else {
+    message(Deploy build mode selected)
+    DEFINES += DEPLOYBUILD
+}
+

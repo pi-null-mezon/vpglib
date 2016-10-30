@@ -43,36 +43,40 @@
 #endif
 
 /**
- * vpg namespace represents classes for photoplethysmography
+ * vpg namespace represents classes for ppg signal from video processing
  */
 namespace vpg {
 //-------------------------------------------------------
 /**
- * The PulseProcessor class process ppg signal to measure heart rate
+ * The PulseProcessor class process ppg signal to measure pulse rate
  */
 class DLLSPEC PulseProcessor
 {
 public:
-    enum ProcessType {HeartRate, BreathRate};
+    enum ProcessType {HeartRate};
     /**
-     * Default class constructor
+     * Default constructor
      * @param dT_ms - discretization period in milliseconds
+     * @param type - type of desired pulse frequency source/range
      */
     PulseProcessor(double dT_ms = 33.0, ProcessType type = HeartRate);
     /**
-     * Overloaded class constructor
+     * Overloaded constructor
      * @param Tov_ms - length of signal record in time domain in milliseconds
+     * @param Tcn_ms - time interval for signal centering and normalization
      * @param dT_ms - discretization period in milliseconds
+     * @param type - type of desired pulse frequency source/range
      */
-    PulseProcessor(double Tov_ms, double dT_ms, ProcessType type);
+    PulseProcessor(double Tov_ms, double Tcn_ms,  double dT_ms, ProcessType type);
     /**
      * Class destructor
      */
     virtual ~PulseProcessor();
     /**
-     * Update pulsogramm by one count
+     * Update ppg signal by one count
      * @param value - count value
      * @param time - count measurement time in millisecond
+     * @note function should be called at each video frame
      */
     void update(double value, double time);
     /**
@@ -115,7 +119,7 @@ private:
 
     int __loop(int d) const;
     int __seek(int d) const;
-    void __init(int length , double dT_ms, ProcessType type);
+    void __init(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type);
 };
 //-------------------------------------------------------
 /**
