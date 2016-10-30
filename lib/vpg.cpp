@@ -17,13 +17,12 @@
  */
 
 #include "vpg.h"
-#include <vector>
 
 #ifndef min
 #define min(a,b) (((a) > (b))? (b) : (a))
 #endif
 
-#define FILTER_LENGTH 7
+#define FILTER_LENGTH 9
 
 namespace vpg {
 
@@ -32,38 +31,29 @@ PulseProcessor::PulseProcessor(double dT_ms, ProcessType type)
 {
     switch(type){
         case HeartRate:
-            __init((int)(7000.0/dT_ms), dT_ms, type);
-            break;
-        case BreathRate:
-            __init((int)(14000.0/dT_ms), dT_ms, type);
+            __init(7777.0, 500.0, dT_ms, type);
             break;
     }
 }
 
-PulseProcessor::PulseProcessor(double Tov_ms, double dT_ms, ProcessType type)
+PulseProcessor::PulseProcessor(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type)
 {
-    __init((int)(Tov_ms/dT_ms), dT_ms, type);
+    __init(Tov_ms, Tcn_ms, dT_ms, type);
 }
 
-void PulseProcessor::__init(int length, double dT_ms, ProcessType type)
+void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type)
 {
-    m_length = length;
+    m_length = static_cast<int>( Tov_ms / dT_ms );
     m_procType = type;
     curpos = 0;    
 
     switch(m_procType){
         case HeartRate:
             m_Frequency = 80.0;
-            m_interval = 15;
+            m_interval = static_cast<int>( Tcn_ms/ dT_ms );
             m_bottomFrequencyLimit = 0.8; // 48 bpm
             m_topFrequencyLimit = 3.0;    // 180 bpm
-            break;
-        case BreathRate:
-            m_Frequency = 16.0;
-            m_interval = getLength()/4;
-            m_bottomFrequencyLimit = 0.2; // 16 rpm
-            m_topFrequencyLimit = 0.7;    // 42 rpm
-            break;
+            break;        
     }
 
     v_raw = new double[m_length];
@@ -264,7 +254,7 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
         img = rgbImage;
 
     std::vector<cv::Rect> faces;
-    m_classifier.detectMultiScale(img, faces, 1.1, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
+    m_classifier.detectMultiScale(img, faces, 1.15, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
 
     if(faces.size() > 0) {
         __updateRects(faces[0]);
@@ -282,39 +272,40 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     m_faceRect = cv::Rect((int)(tempRect.x*scaleX), (int)(tempRect.y*scaleY), (int)(tempRect.width*scaleX), (int)(tempRect.height*scaleY))
                  & cv::Rect(0, 0, rgbImage.cols, rgbImage.rows);
 
-    unsigned int W = m_faceRect.width;
-    unsigned int H = m_faceRect.height;
+    int W = m_faceRect.width;
+    int H = m_faceRect.height;
     unsigned long green = 0;
-    long area = 0;
+    unsigned long area = 0;
 
     if(m_faceRect.area() > 0 && m_nofaceframes < FACE_PROCESSOR_LENGTH) {
-            cv::Mat region = cv::Mat(rgbImage, m_faceRect).clone();
-            cv::blur(region,region, m_blurSize);
-            unsigned int dX = W / 16;
-            unsigned int dY = H / 30;
-            m_ellRect = cv::Rect(dX, -6 * dY, W - 2 * dX, H + 6 * dY);
-            uint X = m_ellRect.x;
-            W = m_ellRect.width;
-            unsigned char *ptr;
-            unsigned char tR = 0, tG = 0, tB = 0;
-#pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
-            for(unsigned int j = 0; j < H; j++) {
-                ptr = region.ptr(j);
-                for(unsigned int i = X; i < X + W; i++) {
-                    tB = ptr[3*i];
-                    tG = ptr[3*i+1];
-                    tR = ptr[3*i+2];
-                    if( __skinColor(tR, tG, tB) && __insideEllipse(i, j)) {
-                        area++;
-                        green += tG;
-                    }                   
+        cv::Mat region = cv::Mat(rgbImage, m_faceRect).clone();
+        cv::blur(region,region, m_blurSize);
+        int dX = W / 16;
+        int dY = H / 30;
+        // It will be rect inside m_faceRect
+        m_ellRect = cv::Rect(dX, -6 * dY, W - 2 * dX, H + 6 * dY);
+        int X = m_ellRect.x;
+        W = m_ellRect.width;
+        unsigned char *ptr;
+        unsigned char tR = 0, tG = 0, tB = 0;
+        #pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
+        for(int j = 0; j < H; j++) {
+            ptr = region.ptr(j);
+            for(int i = X; i < X + W; i++) {
+                tB = ptr[3*i];
+                tG = ptr[3*i+1];
+                tR = ptr[3*i+2];
+                if( __skinColor(tR, tG, tB) && __insideEllipse(i, j)) {
+                    area++;
+                    green += tG;
                 }
             }
         }
+    }
 
     resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
-    if((area > m_minFaceSize.area()/2) && (area > 0)) {
+    if(area > static_cast<unsigned long>(m_minFaceSize.area()/2)) {
         resV = (double)green / area;
     } else {
         resV = 0.0;
