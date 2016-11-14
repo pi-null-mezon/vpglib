@@ -174,7 +174,7 @@ double PulseProcessor::computeFrequency()
         m_snr *= (1.0 / (1.0 + bias*bias));
     }
     if(m_snr > 2.0)
-        m_Frequency = std::round((signal_moment / signal_power) * 60000.0 / time);
+        m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
     return m_Frequency;
 }
