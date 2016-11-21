@@ -10,8 +10,7 @@ Sources
 You can find it [here](https://github.com/pi-null-mezon/QPULSECAPTURE/wiki) 
 
 
-
-3rd parties:
+Dependencies:
 ====
 
 * [Opencv](https://github.com/opencv/opencv)
@@ -51,7 +50,7 @@ if( (char)c == 'x' )
 }
 ...
 ```	
-Try to play with this [example](https://github.com/pi-null-mezon/vpglib/tree/master/test_Device)
+You can play with this [example](https://github.com/pi-null-mezon/vpglib/tree/master/test_Device)
 
 Designed by Alex A. Taranov, 2015
 
