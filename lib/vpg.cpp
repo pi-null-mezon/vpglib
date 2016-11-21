@@ -18,12 +18,6 @@
 
 #include "vpg.h"
 
-#ifndef min
-#define min(a,b) (((a) > (b))? (b) : (a))
-#endif
-
-#define FILTER_LENGTH 9
-
 namespace vpg {
 
 //---------------------------------PulseProcessor--------------------------------
@@ -31,23 +25,22 @@ PulseProcessor::PulseProcessor(double dT_ms, ProcessType type)
 {
     switch(type){
         case HeartRate:
-            __init(7777.0, 500.0, dT_ms, type);
+            __init(8000.0, 500.0, 300.0, dT_ms, type);
             break;
     }
 }
 
-PulseProcessor::PulseProcessor(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type)
+PulseProcessor::PulseProcessor(double Tov_ms, double Tcn_ms, double Tlpf_ms, double dT_ms, ProcessType type)
 {
-    __init(Tov_ms, Tcn_ms, dT_ms, type);
+    __init(Tov_ms, Tcn_ms, Tlpf_ms, dT_ms, type);
 }
 
-void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type)
+void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double dT_ms, ProcessType type)
 {
     m_length = static_cast<int>( Tov_ms / dT_ms );
-    m_procType = type;
-    curpos = 0;    
+    m_filterlength = static_cast<int>( Tlpf_ms / dT_ms );
 
-    switch(m_procType){
+    switch(type){
         case HeartRate:
             m_Frequency = 80.0;
             m_interval = static_cast<int>( Tcn_ms/ dT_ms );
@@ -66,12 +59,14 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double dT_ms, ProcessT
         v_Y[i] = 0.0;
         v_time[i] = dT_ms;
     }
-    v_X = new double[FILTER_LENGTH];
-    for(int i = 0; i < FILTER_LENGTH; i ++)
+    v_X = new double[m_filterlength];
+    for(int i = 0; i < m_filterlength; i ++)
 		v_X[i] = (double)i;
 
-    v_data = new cv::Mat(1, m_length, CV_64F);
-    v_dft = new cv::Mat(1, m_length, CV_64F);     
+    v_datamat = cv::Mat(1, m_length, CV_64F);
+    v_dftmat = cv::Mat(1, m_length, CV_64F);
+
+    curpos = 0;
 }
 
 PulseProcessor::~PulseProcessor()
@@ -81,8 +76,6 @@ PulseProcessor::~PulseProcessor()
     delete[] v_X;
     delete[] v_time;
     delete[] v_FA;
-    delete v_dft;
-    delete v_data;
 }
 
 void PulseProcessor::update(double value, double time)
@@ -109,13 +102,13 @@ void PulseProcessor::update(double value, double time)
     v_X[__seek(curpos)] = (v_raw[curpos] - mean)/ sko;
 
     double integral = 0.0;
-    for(int i = 0; i < FILTER_LENGTH; i++) {
+    for(int i = 0; i < m_filterlength; i++) {
         //integral += v_X[__seek(curpos - i)];
         // does the same as above if we add up along whole filter length
         integral += v_X[i];
     }
 
-    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (FILTER_LENGTH + 1.0);
+    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (m_filterlength + 1.0);
 
     curpos = (++curpos) % m_length;
 }
@@ -123,14 +116,16 @@ void PulseProcessor::update(double value, double time)
 double PulseProcessor::computeFrequency()
 {
     double time = 0.0;
-    for (int i = 0; i < m_length; i++) {
+    for (int i = 0; i < m_length; i++)
         time += v_time[i];
-    }
-    double *pt = v_data->ptr<double>(0);
+
+
+    double *pt = v_datamat.ptr<double>(0);
     for(int i = 0; i < m_length; i++)
         pt[i] = v_Y[__loop(curpos - 1 - i)];
-    cv::dft(*v_data, *v_dft);
-    const double *v_fft = v_dft->ptr<const double>(0);
+
+    cv::dft(v_datamat, v_dftmat);
+    const double *v_fft = v_dftmat.ptr<const double>(0);
 
     // complex-conjugate-symmetrical array
     v_FA[0] = v_fft[0]*v_fft[0];
@@ -201,7 +196,7 @@ int PulseProcessor::__loop(int d) const
 
 int PulseProcessor::__seek(int d) const
 {
-    return ((FILTER_LENGTH + (d % FILTER_LENGTH)) % FILTER_LENGTH);
+    return ((m_filterlength + (d % m_filterlength)) % m_filterlength);
 }
 //--------------------------------FaceProcessor--------------------------------
 
@@ -357,7 +352,7 @@ bool FaceProcessor::__insideEllipse(int x, int y) const
 
 bool FaceProcessor::__skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const
 {
-    if( (vR > 95) && (vR > vG) && (vG > 40) && (vB > 20) && ((vR - min(vG,vB)) > 5) && ((vR - vG) > 5) )
+    if( (vR > 95) && (vR > vG) && (vG > 40) && (vB > 20) && ((vR - std::min(vG,vB)) > 5) && ((vR - vG) > 5) )
         return true;
     else
         return false;
