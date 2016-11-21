@@ -67,7 +67,7 @@ public:
      * @param dT_ms - discretization period in milliseconds
      * @param type - type of desired pulse frequency source/range
      */
-    PulseProcessor(double Tov_ms, double Tcn_ms,  double dT_ms, ProcessType type);
+    PulseProcessor(double Tov_ms, double Tcn_ms, double Tlpf_ms,  double dT_ms, ProcessType type);
     /**
      * Class destructor
      */
@@ -101,6 +101,11 @@ public:
     double getSNR() const;
 
 private:
+
+    int __loop(int d) const;
+    int __seek(int d) const;
+    void __init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double dT_ms, ProcessType type);
+
     double *v_raw;
     double *v_time;
     double *v_Y;
@@ -108,18 +113,15 @@ private:
     double *v_FA;
     int m_interval;
     int m_length;
-    double m_bottomFrequencyLimit;
-    double m_topFrequencyLimit;
+    int m_filterlength;
     int curpos;
+    double m_bottomFrequencyLimit;
+    double m_topFrequencyLimit;    
     double m_snr;
     double m_Frequency;
-    cv::Mat *v_data;
-    cv::Mat *v_dft;
-    ProcessType m_procType;
 
-    int __loop(int d) const;
-    int __seek(int d) const;
-    void __init(double Tov_ms, double Tcn_ms, double dT_ms, ProcessType type);
+    cv::Mat v_datamat;
+    cv::Mat v_dftmat;
 };
 //-------------------------------------------------------
 /**
