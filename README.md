@@ -1,13 +1,18 @@
 # VPGLIB
 
-An Opencv extension library that uses digital image processing for the blood pulse extraction from the video of the human face.
-Pay attention that ordinary PC is not certified as measurement tool, so measurement error could be high. Use library only at your own risk, no warranties are granted. General research sources could be found [here](https://github.com/pi-null-mezon/QPULSECAPTURE/wiki).
+An Opencv extension library that uses digital image processing for the blood pulse extraction from the video of the human face. HR measurement ranges from 55 bpm to 175 bpm and absolute error in most cases should be less than 5 bpm. Pay attention that ordinary PC is not certified as measurement tool, so measurement error could be high. Use library only at your own risk, no warranties are granted.
 
-HR measurement ranges from 55 bpm to 175 bpm and absolute error in most cases should be less than 5 bpm. 
+[List of sources](https://github.com/pi-null-mezon/QPULSECAPTURE/wiki)
+====
 
-To work with vpg library you should provide the following dependencies: opencv
+Dependencies:
+====
+
+[Opencv](https://github.com/opencv/opencv)
 
 How to use:
+====
+
 ```c++
 #include "vpg.h"
 ...
@@ -37,9 +42,8 @@ if( (char)c == 'x' )
     break;
 }
 ...
-```
-	
-Look library examples in dirs: test_Device and test_File
+```	
+Play with this (examples)[https://github.com/pi-null-mezon/vpglib/tree/master/test_Device]
 
 Designed by Alex A. Taranov, 2015
 
