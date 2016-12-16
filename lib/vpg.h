@@ -99,6 +99,11 @@ public:
      * @return relation between pulse and noise harmonics energies
      */
     double getSNR() const;
+    /**
+     * @brief use this function to get last one VPG signal sample value
+     * @return value of the centered and normalized VPG signal
+     */
+    double getSignalSampleValue() const;
 
 private:
 
@@ -162,6 +167,17 @@ public:
      * @return was file loaded or not
      */
     bool loadClassifier(const std::string &filename);
+    /**
+     * @brief measureFramePeriod should be used to measure frame period for the target video source
+     * @param _vcptr - pointe rto the target video capture (that will be used to VPG extraction)
+     * @return average frame time in ms (use this value to instantiate PulseProcessor instance then)
+     * @note VideoCapture object should be opened else -1.0 will be returned
+     */
+    double measureFramePeriod(cv::VideoCapture *_vcptr);
+    /**
+     * @brief dropTimer - call to drop the internal timer
+     */
+    void dropTimer();
 
 private:
     cv::CascadeClassifier m_classifier;

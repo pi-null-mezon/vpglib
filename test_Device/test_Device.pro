@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 TARGET = vpglight
-VERSION = 1.0.0.0
+VERSION = 1.0.0.1
 
 DEFINES += APP_DESIGNER=\\\"Alex.A.Taranov\\\" \
            APP_NAME=\\\"$${TARGET}\\\" \

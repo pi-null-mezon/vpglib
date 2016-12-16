@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <ctime>
 
-#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 #include "vpg.h"
 
 template<typename T>
@@ -28,7 +28,9 @@ int main(int argc, char *argv[])
 {
     float measInt_ms = 1000.0f;
     int deviceID = 0;
-    char *outputfilename = 0;
+    char *outputHRfilename = 0;
+    char *outputVPGfilename = 0;
+    char *outputVideofilename = 0;
     while((--argc > 0) && ((*++argv)[0] == '-')) {
         char option = *++argv[0];
         switch(option) {
@@ -39,45 +41,71 @@ int main(int argc, char *argv[])
                 measInt_ms = str2num<float>(++argv[0]);
                 break;
             case 'o':
-                outputfilename = ++argv[0];
+                outputHRfilename = ++argv[0];
+                break;
+            case 's':
+                outputVPGfilename = ++argv[0];
+                break;
+            case 'w':
+                outputVideofilename = ++argv[0];
                 break;
             case 'h':
-                std::cout << APP_NAME << " v" << APP_VERSION << " help" << std::endl
-                          << " -v - video device enumerator (default " << deviceID << ")" << std::endl
-                          << " -t - measurement interval (default " << measInt_ms << " ms)" << std::endl
-                          << " -o - output file name" << std::endl
-                          << " -h - this help" << std::endl
+                std::cout << APP_NAME << " v" << APP_VERSION << " help" << std::endl << std::endl
+                          << " -v[int] - video device enumerator (default " << deviceID << ")" << std::endl
+                          << " -t[real] - measurement interval (default " << measInt_ms << " ms)" << std::endl
+                          << " -o[str] - output file with the HR vs time" << std::endl
+                          << " -s[str] - output file with the VPG counts vs frame number" << std::endl
+                          << " -w[str] - output video file name" << std::endl
+                          << " -h - this help" << std::endl << std::endl
                           << APP_DESIGNER << std::endl;
                 return 0;
         }
     }
-
-    std::ofstream ofs;
-    if(outputfilename != 0) {
-        ofs.open(outputfilename);
-        if(!ofs.is_open()) {
-            std::cout << "Could not open file " << outputfilename
+    // Open stream for heart rate log if it is neeeded
+    std::ofstream ohrfs;
+    if(outputHRfilename != 0) {
+        ohrfs.open(outputHRfilename);
+        if(!ohrfs.is_open()) {
+            std::cout << "Could not open file " << outputHRfilename
                       << " for writing. Abort...";
             return -1;
         } else {
-            ofs << "File created by " <<  APP_NAME << " v" << APP_VERSION << std::endl;
+            ohrfs << "File created by " <<  APP_NAME << " v" << APP_VERSION << std::endl;
+        }
+    }
+    // Open stream for vpg signal log if it is neeeded
+    std::ofstream ovpgfs;
+    if(outputVPGfilename != 0) {
+        ovpgfs.open(outputVPGfilename);
+        if(!ovpgfs.is_open()) {
+            std::cout << "Could not open file " << outputVPGfilename
+                      << " for writing. Abort...";
+            return -1;
+        } else {
+            ovpgfs << "File created by " <<  APP_NAME << " v" << APP_VERSION << std::endl;
         }
     }
 
     cv::VideoCapture capture;
-    cv::Mat frame;
-
-    #ifdef DESIGNBUILD
-    vpg::FaceProcessor faceproc(std::string(OPENCV_DATA_DIR) +
-                                std::string("/haarcascades/haarcascade_frontalface_alt2.xml"));
-    #else
-    vpg::FaceProcessor faceproc(std::string("haarcascades/haarcascade_frontalface_alt2.xml"));
-    #endif
-
-    double framePeriod = 33.0; // milliseconds
-    vpg::PulseProcessor pulseproc(framePeriod);
 
     if(capture.open(deviceID)) {
+        #ifdef DESIGNBUILD
+        vpg::FaceProcessor faceproc(std::string(OPENCV_DATA_DIR) + std::string("/haarcascades/haarcascade_frontalface_alt2.xml"));
+        #else
+        vpg::FaceProcessor faceproc(std::string("haarcascades/haarcascade_frontalface_alt2.xml"));
+        #endif
+
+        std::cout << "Measure frame period... " << std::endl;
+        double framePeriod = faceproc.measureFramePeriod(&capture); // milliseconds
+        std::cout << framePeriod << " ms" << std::endl;
+        vpg::PulseProcessor pulseproc(framePeriod);
+
+        cv::VideoWriter videowriter;
+        if(outputVideofilename)
+            if(videowriter.open(outputVideofilename, CV_FOURCC('M','P','4','2'), 1000.0/framePeriod, cv::Size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT))) == false)
+                std::cout << "Warning! Output videofile can not be opened!" << std::endl;
+
+        cv::Mat frame;
         double s = 0.0, t = 0.0, timeout = measInt_ms;
         int length = pulseproc.getLength();
         const double *vS = pulseproc.getSignal();
@@ -85,11 +113,12 @@ int main(int argc, char *argv[])
         cv::Rect faceRect;
         unsigned int frequency = 80;
         double snr = 0.0;
+        unsigned long framecounter = 0;
 
-        if(ofs.is_open()) {
-            std::time_t t = std::time(0);
-            struct std::tm * now = localtime( &t );
-            ofs  << "Record was started at "
+        std::time_t _timet = std::time(0);
+        struct std::tm * now = localtime( &_timet );
+        if(ohrfs.is_open()) {
+           ohrfs << "Record was started at "
                  << std::setw(2) << std::setfill('0') << now->tm_mday << '.'
                  << std::setw(2) << std::setfill('0') << (now->tm_mon + 1) << '.'
                  << (now->tm_year + 1900) << ' '
@@ -97,11 +126,26 @@ int main(int argc, char *argv[])
                  << std::setw(2) << std::setfill('0') << (now->tm_min) << ":"
                  << std::setw(2) << std::setfill('0') << now->tm_sec << std::endl
                  << "Measurement interval " << measInt_ms << "[ms]" << std::endl
-                 << "Pulse[bpm];\tSNR[dB]" << std::endl;
+                 << "HR[bpm];\tSNR[dB]" << std::endl;
+        }
+        if(ovpgfs.is_open()) {
+           ovpgfs << "Record was started at "
+                  << std::setw(2) << std::setfill('0') << now->tm_mday << '.'
+                  << std::setw(2) << std::setfill('0') << (now->tm_mon + 1) << '.'
+                  << (now->tm_year + 1900) << ' '
+                  << std::setw(2) << std::setfill('0') << (now->tm_hour) << ":"
+                  << std::setw(2) << std::setfill('0') << (now->tm_min) << ":"
+                  << std::setw(2) << std::setfill('0') << now->tm_sec << std::endl
+                  << "HR measurement interval " << measInt_ms << "[ms]" << std::endl
+                  << "Frame;\tVPG[c.n.];\tHR[bpm];\tSNR[db]" << std::endl;
         }
 
+        faceproc.dropTimer();
         while(true) {
             if(capture.read(frame)) {
+
+                if(videowriter.isOpened())
+                    videowriter.write(frame);
 
                 faceproc.enrollImage(frame, s, t);
                 pulseproc.update(s,t);
@@ -109,10 +153,10 @@ int main(int argc, char *argv[])
 
                 if(faceRect.area() > 0) {
 
-                    float shiftX = 10.0f;
+                    float shiftX = frame.cols * 0.1f;
                     float stepX = static_cast<float>(frame.cols - 2*shiftX) / length;
                     float stepY = 0.025f * frame.rows;
-                    float shiftY = 0.8f * frame.rows;
+                    float shiftY = 0.9f * frame.rows;
 
                     for(int i = 0; i < length - 1; i++) {                      
                         p1 = cv::Point2f(shiftX + stepX * i, shiftY + stepY * vS[i]);
@@ -134,8 +178,8 @@ int main(int argc, char *argv[])
                     cv::putText(frame, _snrstr, cv::Point(11, 61), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
                     cv::putText(frame, _snrstr, cv::Point(10, 60), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
                 }
-                cv::putText(frame, num2str(t,1) + " ms, press escape to exit", cv::Point(11, frame.rows - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, num2str(t,1) + " ms, press escape to exit", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+                cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(11, frame.rows - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+                cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
 
                 cv::imshow("vpglib test", frame);
             }
@@ -146,20 +190,42 @@ int main(int argc, char *argv[])
                 frequency = static_cast<int>(pulseproc.computeFrequency());
                 snr = pulseproc.getSNR();
 
-                if(ofs.is_open())
-                    ofs << frequency << ";\t" << std::setprecision(2) << snr << std::endl;
+                if(ohrfs.is_open())
+                    ohrfs << frequency << ";\t" << std::setprecision(2) << snr << std::endl;
 
                 timeout = measInt_ms;
+            }
+
+            if(ovpgfs.is_open()) {
+                ovpgfs << framecounter
+                       << std::setprecision(3) << ";\t" << pulseproc.getSignalSampleValue()
+                       << ";\t" << frequency
+                       << std::setprecision(2) << ";\t" << snr
+                       << std::endl;
             }
 
             int c = cv::waitKey(1); // process frame as often as it is possible
             if( (char)c == 27 ) // escape key code
                 break;
+            else switch(c) {
+                case 's':
+                    capture.set(CV_CAP_PROP_SETTINGS,0.0);
+                    break;
+            }
+
+            framecounter++;
         }        
+
         capture.release();        
 
-        if(ofs.is_open())
-            ofs.close();
+        if(videowriter.isOpened())
+            videowriter.release();
+
+        if(ohrfs.is_open())
+            ohrfs.close();
+
+        if(ovpgfs.is_open())
+            ovpgfs.close();
 
         return 0;
     } else {
