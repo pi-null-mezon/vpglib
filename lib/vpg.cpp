@@ -55,7 +55,7 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double
     v_FA = new double[m_length/2 + 1];
 
     for(int i = 0; i < m_length; i++)  {
-        v_raw[i] = (double)(i % 2);
+        v_raw[i] = 0.0;
         v_Y[i] = 0.0;
         v_time[i] = dT_ms;
     }
@@ -189,6 +189,11 @@ double PulseProcessor::getSNR() const
     return m_snr;
 }
 
+double PulseProcessor::getSignalSampleValue() const
+{
+    return v_Y[__loop(curpos-1)];
+}
+
 int PulseProcessor::__loop(int d) const
 {
     return ((m_length + (d % m_length)) % m_length);
@@ -200,7 +205,7 @@ int PulseProcessor::__seek(int d) const
 }
 //--------------------------------FaceProcessor--------------------------------
 
-#define FACE_PROCESSOR_LENGTH 25
+#define FACE_PROCESSOR_LENGTH 33
 
 FaceProcessor::FaceProcessor(const std::string &filename)
 {
@@ -230,9 +235,6 @@ FaceProcessor::~FaceProcessor()
 
 void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &resT)
 {
-    if(f_firstface)
-        m_markTime = cv::getTickCount();
-
     cv::Mat img;
     double scaleX = 1.0, scaleY = 1.0;
     if(rgbImage.cols > 640 || rgbImage.rows > 480) {
@@ -327,6 +329,37 @@ cv::Rect FaceProcessor::__getMeanRect() const
 bool FaceProcessor::loadClassifier(const std::string &filename)
 {
     return m_classifier.load(filename);
+}
+
+double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
+{
+    //Check if video source is opened
+    if(_vcptr->isOpened() == false)
+        return -1.0;
+
+    if(_vcptr->get(cv::CAP_PROP_POS_MSEC) == -1) { // if the video source is a video device
+
+        int _iterations = 50;
+        double _timeaccum = 0.0, _time = 0.0, _value = 0.0;
+        cv::Mat _frame;
+        dropTimer();
+        for(int i = 0; i < _iterations; i++) {
+            if(_vcptr->read(_frame)) {
+                enrollImage(_frame,_value,_time);
+                if(i > 0) { // exclude first count that could be delayed
+                    _timeaccum += _time;
+                }
+            }
+        }
+        return _timeaccum / (_iterations - 1);
+    } else { // if the video source is a video file
+        return 1000.0 / _vcptr->get(cv::CAP_PROP_FPS);
+    }
+}
+
+void FaceProcessor::dropTimer()
+{
+    m_markTime = cv::getTickCount();
 }
 
 void FaceProcessor::__updateRects(const cv::Rect &rect)
