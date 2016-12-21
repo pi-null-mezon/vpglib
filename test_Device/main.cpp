@@ -11,7 +11,7 @@ template<typename T>
 std::string num2str(T num, unsigned char precision=0)
 {
     if(precision > 0)
-        return std::to_string(static_cast<long>(num)) + "." + std::to_string(static_cast<long>(std::abs(num - static_cast<long>(num))*std::pow(10.0, precision)));
+        return std::to_string(static_cast<long>(num)) + "." + std::to_string(static_cast<long>(std::abs(static_cast<double>(num) - static_cast<long>(num))*std::pow(10.0, precision)));
     else
         return std::to_string(static_cast<long>(num));
 }
