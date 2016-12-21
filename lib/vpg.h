@@ -90,6 +90,11 @@ public:
      */
     int getLength() const;
     /**
+     * @brief self explained
+     * @return current position in the signal vector
+     */
+    int getLastPos() const;
+    /**
      * @brief get pointer to signal counts
      * @return pointer to data
      */
@@ -124,6 +129,7 @@ private:
     double m_topFrequencyLimit;    
     double m_snr;
     double m_Frequency;
+    double m_dTms;
 
     cv::Mat v_datamat;
     cv::Mat v_dftmat;
@@ -178,6 +184,11 @@ public:
      * @brief dropTimer - call to drop the internal timer
      */
     void dropTimer();
+    /**
+     * @brief check if cascade classifier has been loaded
+     * @return self explained
+     */
+    bool empty();
 
 private:
     cv::CascadeClassifier m_classifier;

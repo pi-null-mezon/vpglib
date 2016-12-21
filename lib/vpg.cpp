@@ -25,7 +25,7 @@ PulseProcessor::PulseProcessor(double dT_ms, ProcessType type)
 {
     switch(type){
         case HeartRate:
-            __init(8000.0, 500.0, 300.0, dT_ms, type);
+            __init(7000.0, 400.0, 300.0, dT_ms, type);
             break;
     }
 }
@@ -37,12 +37,13 @@ PulseProcessor::PulseProcessor(double Tov_ms, double Tcn_ms, double Tlpf_ms, dou
 
 void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double dT_ms, ProcessType type)
 {
+    m_dTms = dT_ms;
     m_length = static_cast<int>( Tov_ms / dT_ms );
     m_filterlength = static_cast<int>( Tlpf_ms / dT_ms );
 
     switch(type){
         case HeartRate:
-            m_Frequency = 80.0;
+            m_Frequency = -1.0;
             m_interval = static_cast<int>( Tcn_ms/ dT_ms );
             m_bottomFrequencyLimit = 0.8; // 48 bpm
             m_topFrequencyLimit = 3.0;    // 180 bpm
@@ -81,7 +82,11 @@ PulseProcessor::~PulseProcessor()
 void PulseProcessor::update(double value, double time)
 {
     v_raw[curpos] = value;
-    v_time[curpos] = time;
+    if(std::abs(time - m_dTms) < m_dTms) {
+        v_time[curpos] = time;
+    } else {
+        v_time[curpos] = m_dTms;
+    }
 
     double mean = 0.0;
     double sko = 0.0;
@@ -177,6 +182,11 @@ double PulseProcessor::computeFrequency()
 int PulseProcessor::getLength() const
 {
     return m_length;
+}
+
+int PulseProcessor::getLastPos() const
+{
+    return __loop(curpos - 1);
 }
 
 const double * PulseProcessor::getSignal() const
@@ -339,7 +349,7 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
 
     if(_vcptr->get(cv::CAP_PROP_POS_MSEC) == -1) { // if the video source is a video device
 
-        int _iterations = 50;
+        int _iterations = 30;
         double _timeaccum = 0.0, _time = 0.0, _value = 0.0;
         cv::Mat _frame;
         dropTimer();
@@ -351,7 +361,7 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
                 }
             }
         }
-        return _timeaccum / (_iterations - 1);
+        return _timeaccum / (_iterations - 1.0);
     } else { // if the video source is a video file
         return 1000.0 / _vcptr->get(cv::CAP_PROP_FPS);
     }
@@ -360,6 +370,11 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
 void FaceProcessor::dropTimer()
 {
     m_markTime = cv::getTickCount();
+}
+
+bool FaceProcessor::empty()
+{
+    return m_classifier.empty();
 }
 
 void FaceProcessor::__updateRects(const cv::Rect &rect)
