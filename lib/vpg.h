@@ -100,10 +100,15 @@ public:
      */
     const double *getSignal() const;
     /**
-     * @brief get snr value
+     * @brief get last frequency estimation
+     * @return frequency
+     */
+    double getFrequency() const;
+    /**
+     * @brief get last snr estimation
      * @return relation between pulse and noise harmonics energies
      */
-    double getSNR() const;
+    double getSNR() const;     
     /**
      * @brief use this function to get last one VPG signal sample value
      * @return value of the centered and normalized VPG signal

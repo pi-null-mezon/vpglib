@@ -43,7 +43,7 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double
 
     switch(type){
         case HeartRate:
-            m_Frequency = -1.0;
+            m_Frequency = 0.0;
             m_interval = static_cast<int>( Tcn_ms/ dT_ms );
             m_bottomFrequencyLimit = 0.8; // 48 bpm
             m_topFrequencyLimit = 3.0;    // 180 bpm
@@ -192,6 +192,11 @@ int PulseProcessor::getLastPos() const
 const double * PulseProcessor::getSignal() const
 {
     return v_Y;
+}
+
+double PulseProcessor::getFrequency() const
+{
+    return m_Frequency;
 }
 
 double PulseProcessor::getSNR() const
