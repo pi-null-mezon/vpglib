@@ -22,7 +22,7 @@ SOURCES += main.cpp
 include($${PWD}/../lib/opencv.pri)
 include($${PWD}/../lib/exportvpg.pri)
 
-CONFIG += designbuild
+#CONFIG += designbuild
 
 designbuild {
     message(Design build mode selected)

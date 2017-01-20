@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     const double *vS = pulseproc.getSignal();
     cv::Point p1(0,0), p2(0,0);
     cv::Rect faceRect;
-    unsigned int frequency = 80;
+    unsigned int frequency = static_cast<unsigned int>(pulseproc.getFrequency());
     double snr = 0.0;
     unsigned long framecounter = 0;
 
@@ -202,7 +202,8 @@ int main(int argc, char *argv[])
         timeout -= t;
 
         if(timeout < 0.0) {
-            frequency = static_cast<int>(pulseproc.computeFrequency());
+
+            frequency = static_cast<unsigned int>(pulseproc.computeFrequency());
             snr = pulseproc.getSNR();
 
             if(ohrfs.is_open())
