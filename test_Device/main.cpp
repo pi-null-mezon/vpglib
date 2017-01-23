@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
             faceproc.enrollImage(frame, s, t);
             if(inputVideofilename) {
-                pulseproc.update(s,framePeriod); // if videofile is used as source that we should use knowing frame period
+                pulseproc.update(s,framePeriod); // if videofile is used as source then we should use knowing frame period
             } else {
                 pulseproc.update(s,t);
             }
@@ -205,7 +205,11 @@ int main(int argc, char *argv[])
             break; // stop processing when frame can not be read
         }
 
-        timeout -= t;
+        if(inputVideofilename) {
+            timeout -= framePeriod; // if videofile is used as source then we should use knowing frame period
+        } else {
+            timeout -= t;
+        }
 
         if(timeout < 0.0) {
 
