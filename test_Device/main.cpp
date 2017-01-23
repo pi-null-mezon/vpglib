@@ -163,7 +163,11 @@ int main(int argc, char *argv[])
                 videowriter.write(frame);
 
             faceproc.enrollImage(frame, s, t);
-            pulseproc.update(s,t);
+            if(inputVideofilename) {
+                pulseproc.update(s,framePeriod); // if videofile is used as source that we should use knowing frame period
+            } else {
+                pulseproc.update(s,t);
+            }
             faceRect = faceproc.getFaceRect();
 
             if(faceRect.area() > 0) {
@@ -197,6 +201,8 @@ int main(int argc, char *argv[])
             cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
 
             cv::imshow("vpglib test", frame);
+        } else {
+            break; // stop processing when frame can not be read
         }
 
         timeout -= t;
