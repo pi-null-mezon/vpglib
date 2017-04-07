@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
         vpg::PulseProcessor pulseproc(framePeriod); // note it is convinirnt to use default constructor only if frame period is near to 33 ms
 
         // Add peak detector for the cardio intervals evaluation and analysis
-        int totalcardiointervals = 75;
+        int totalcardiointervals = 25;
         vpg::PeakDetector peakdetector(pulseproc.getLength(), totalcardiointervals, 11, framePeriod);
         pulseproc.setPeakDetector(&peakdetector);
 
@@ -118,6 +118,11 @@ int main(int argc, char *argv[])
             int c = cv::waitKey(1);
             if( (char)c == 27 ) // 27 is escape ASCII code
                 break;
+            else switch(c) {
+                case 's':
+                    capture.set(CV_CAP_PROP_SETTINGS,0.0);
+                    break;
+            }
         }
         capture.release();
     } else {
