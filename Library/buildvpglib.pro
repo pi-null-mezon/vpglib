@@ -6,13 +6,24 @@ CONFIG(release, debug|release) {
     TARGET = vpgd
 }
 
-SOURCES += vpg.cpp
+SOURCES += \
+    $${PWD}/src/faceprocessor.cpp \
+    $${PWD}/src/hrvprocessor.cpp \
+    $${PWD}/src/peakdetector.cpp \
+    $${PWD}/src/pulseprocessor.cpp
 
-HEADERS += vpg.h
+HEADERS += \
+    $${PWD}/include/faceprocessor.h \
+    $${PWD}/include/hrvprocessor.h \
+    $${PWD}/include/peakdetector.h \
+    $${PWD}/include/pulseprocessor.h \
+    $${PWD}/include/vpg.h
 
-include(opencv.pri)
-include(openmp.pri)
-include(opencl.pri)
+INCLUDEPATH += $${PWD}/include
+
+include($${PWD}/../Shared/opencv.pri)
+include($${PWD}/../Shared/openmp.pri)
+include($${PWD}/../Shared/opencl.pri)
 
 #---------------------------------------------------------
 DEFINES += DLL_BUILD_SETUP # is defined only if library build (for dll generation)
@@ -29,6 +40,7 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x86
 }
 
-DESTDIR = $${PWD}/build/$${ARCHITECTURE}/$${COMPILER}
+DESTDIR = $${PWD}/bin/$${ARCHITECTURE}/$${COMPILER}
+
 
 

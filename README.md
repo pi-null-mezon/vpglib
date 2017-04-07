@@ -3,7 +3,6 @@
 An Opencv extension library that uses digital image processing for the blood pulse extraction from the video of the human face. HR measurement ranges from 55 bpm to 175 bpm and absolute error in most cases should be less than 5 bpm. Pay attention that ordinary PC is not certified as measurement tool, so measurement error could be high. Use library only at your own risk, no warranties are granted.
 
 
-
 Sources
 ====
 

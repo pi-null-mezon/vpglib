@@ -41,4 +41,4 @@ LIBS += -l$$qtLibraryName(opencv_core$${OPENCV_VERSION}) \
 
 DEFINES += OPENCV_DATA_DIR=\\\"$${OPENCV_DIR}/../sources/data\\\"
 
-message(OpenCV library version $${OPENCV_DIR}/$${OPENCV_ARCHITECTURE_DIR}/$${OPENCV_COMPILER_DIR} will be used)
+message(OpenCV version: $${OPENCV_DIR}/$${OPENCV_ARCHITECTURE}/$${OPENCV_COMPILER})

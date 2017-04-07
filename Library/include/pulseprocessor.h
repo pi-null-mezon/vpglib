@@ -15,42 +15,29 @@
  *
  *   See <http://www.opensource.org/licenses/bsd-license>
  */
-
-/**
- * @file vpg.h
- * @author Taranov Alex <pi-null-mezon@yandex.ru>
- * @version 1.0.1.0
- *
- * Library was designed for one special purpose - to measure heart rate from face video.
- * Pay attention that ordinary PC is not certified as measurement tool, so measurement
- * error could be high. Use library at your own risk, no warranties are granted.
- *
- * @section DESCRIPTION
- */
-
-#ifndef VPG_H
-#define VPG_H
-
-#include "opencv2/core.hpp"
-#include "opencv2/objdetect.hpp"
-#include "opencv2/videoio.hpp"
-#include "opencv2/imgproc.hpp"
-
+#ifndef PULSEPROCESSOR_H
+#define PULSEPROCESSOR_H
+//-------------------------------------------------------
 #ifdef DLL_BUILD_SETUP
     #define DLLSPEC __declspec(dllexport)
 #else
     #define DLLSPEC __declspec(dllimport)
 #endif
+//-------------------------------------------------------
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include "peakdetector.h"
+//-------------------------------------------------------
+namespace vpg {
 
 /**
- * vpg namespace represents classes for ppg signal from video processing
+ * @brief The PulseProcessor class should be used for pulse frequency evaluation
  */
-namespace vpg {
-//-------------------------------------------------------
-/**
- * The PulseProcessor class process ppg signal to measure pulse rate
- */
+#ifndef VPG_BUILD_FROM_SOURCE
 class DLLSPEC PulseProcessor
+#else
+class PulseProcessor
+#endif
 {
 public:
     enum ProcessType {HeartRate};
@@ -114,6 +101,11 @@ public:
      * @return value of the centered and normalized VPG signal
      */
     double getSignalSampleValue() const;
+    /**
+     * @brief setPeakDetector - set up particular peak detector that will be updated within processing pipeline
+     * @param pointer - self explained
+     */
+    void setPeakDetector(PeakDetector *pointer);
 
 private:
 
@@ -138,85 +130,9 @@ private:
 
     cv::Mat v_datamat;
     cv::Mat v_dftmat;
+
+    PeakDetector *pt_peakdetector = 0;
 };
+}
 //-------------------------------------------------------
-/**
- * The FaceProcessor class process face image into ppg signal
- */
-class DLLSPEC FaceProcessor
-{
-public:     
-    /**
-     * Default class constructor
-     */
-    FaceProcessor();
-    /**
-     * Overloaded class constructor
-     * @param filename - name of file for cv::CascadeClassifier class
-     */
-    FaceProcessor(const std::string &filename);
-
-    /**
-     * Class destructor
-     */
-    virtual ~FaceProcessor();
-    /**
-     * Enroll image to produce PPG-signal count
-     * @param rgb - input image, BGR format only
-     * @param resV - where result count should be written
-     * @param resT - where processing time should be written
-     */
-    void enrollImage(const cv::Mat &rgbImage, double &resV, double &resT);
-    /**
-     * Get cv::Rect that bounds face on image
-     * @return coordinates of face on image in cv::Rect form
-     */
-    cv::Rect getFaceRect() const;
-    /**
-     * Load cv::CascadeClassifier face pattern from a file
-     * @param filename - name of file for cv::CascadeClassifier class
-     * @return was file loaded or not
-     */
-    bool loadClassifier(const std::string &filename);
-    /**
-     * @brief measureFramePeriod should be used to measure frame period for the target video source
-     * @param _vcptr - pointe rto the target video capture (that will be used to VPG extraction)
-     * @return average frame time in ms (use this value to instantiate PulseProcessor instance then)
-     * @note VideoCapture object should be opened else -1.0 will be returned
-     */
-    double measureFramePeriod(cv::VideoCapture *_vcptr);
-    /**
-     * @brief dropTimer - call to drop the internal timer
-     */
-    void dropTimer();
-    /**
-     * @brief check if cascade classifier has been loaded
-     * @return self explained
-     */
-    bool empty();
-
-private:
-    cv::CascadeClassifier m_classifier;
-    cv::Rect *v_rects;
-    cv::Rect m_ellRect;
-    int64 m_markTime;
-    unsigned int m_pos;
-    uchar m_nofaceframes;
-    bool f_firstface;
-    cv::Rect m_faceRect;
-    cv::Size m_minFaceSize;
-    cv::Size m_blurSize;
-
-    cv::Rect __getMeanRect() const;
-    void __updateRects(const cv::Rect &rect);
-    bool __insideEllipse(int x, int y) const;
-    bool __skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const;
-    void __init();
-};
-//-------------------------------------------------------
-} // end of namespace vpg*/
-
-#endif
-
-
-
+#endif // PULSEPROCESSOR_H

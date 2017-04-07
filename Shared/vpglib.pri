@@ -1,4 +1,4 @@
-VPGLIBPATH = C:/Programming/vpglib
+VPGLIBPATH = $${PWD}/../library
 
 defineReplace(qtLibraryName) {
    unset(LIBRARY_NAME)
@@ -19,8 +19,9 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x86
 }
 
-LIBS += -L$${VPGLIBPATH}/lib/build/$${ARCHITECTURE}/$${COMPILER}
+LIBS += -L$${VPGLIBPATH}/bin/$${ARCHITECTURE}/$${COMPILER}
 LIBS += -l$$qtLibraryName(vpg)
 
+INCLUDEPATH += $${VPGLIBPATH}/include
 
-INCLUDEPATH += $${VPGLIBPATH}/lib
+include($${PWD}/opencv.pri)
