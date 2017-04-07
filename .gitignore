@@ -31,7 +31,5 @@
 *.pro.user*
 /Install
 /build
-/Build
-/lib/build
-/Releases
+/Examples/build
 
