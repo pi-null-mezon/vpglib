@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         cv::Mat frame;
         unsigned int k = 0;
         double s = 0.0, t = 0.0, _snr = 0.0;
-        int _hr = 80;
+        int _hr = pulseproc.getFrequency();
 
         const double *signal = pulseproc.getSignal();
         int length = pulseproc.getLength();
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
             }
             // After frame processing We could want to evaluate heart rate, here at each 32-th frame
             if(k % 33 == 0) {
-                _hr = (int)pulseproc.computeFrequency();
+                _hr = (_hr + pulseproc.computeFrequency())/2;
                 _snr = pulseproc.getSNR();
             }
 
