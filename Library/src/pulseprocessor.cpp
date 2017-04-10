@@ -121,13 +121,18 @@ void PulseProcessor::update(double value, double time)
 
 double PulseProcessor::computeFrequency()
 {
-    double time = 0.0;
-    for (int i = 0; i < m_length; i++)
-        time += v_time[i];
-
+    unsigned int _zeros = 0;
     double *pt = v_datamat.ptr<double>(0);
-    for(int i = 0; i < m_length; i++)
+    for(int i = 0; i < m_length; i++) {
         pt[i] = v_Y[__loop(curpos - 1 - i)];
+        if(std::abs(pt[i]) <= 0.01) {
+            _zeros++;
+        }
+    }
+    if(_zeros > 0.5 * m_length) {
+        m_snr = -10.0;
+        return m_Frequency;
+    }
 
     cv::dft(v_datamat, v_dftmat);
     const double *v_fft = v_dftmat.ptr<const double>(0);
@@ -142,6 +147,11 @@ double PulseProcessor::computeFrequency()
         for(int i = 1; i <= m_length/2; i++)
             v_FA[i] = v_fft[2*i-1]*v_fft[2*i-1] + v_fft[2*i]*v_fft[2*i];
     }
+
+    // Count time
+    double time = 0.0;
+    for (int i = 0; i < m_length; i++)
+        time += v_time[i];
 
     int bottom = (int)(m_bottomFrequencyLimit * time / 1000.0);
     int top = (int)(m_topFrequencyLimit * time / 1000.0);
@@ -168,12 +178,12 @@ double PulseProcessor::computeFrequency()
     }
 
     m_snr = 0.0;
-    if(signal_power > 0.01) {
+    if(signal_power > 0.01 && noise_power > 0.01) {
         m_snr = 10.0 * std::log10( signal_power / noise_power );
         double bias = (double)i_maxpower - ( signal_moment / signal_power );
         m_snr *= (1.0 / (1.0 + bias*bias));
     }
-    if(m_snr > 2.0)
+    if(m_snr > 4.0)
         m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
     return m_Frequency;

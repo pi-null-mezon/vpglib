@@ -151,19 +151,19 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
 
     if(_vcptr->get(cv::CAP_PROP_POS_MSEC) == -1) { // if the video source is a video device
 
-        int _iterations = 30;
+        int _iterations = 35;
         double _timeaccum = 0.0, _time = 0.0, _value = 0.0;
         cv::Mat _frame;
         dropTimer();
         for(int i = 0; i < _iterations; i++) {
             if(_vcptr->read(_frame)) {
                 enrollImage(_frame,_value,_time);
-                if(i > 0) { // exclude first count that could be delayed
+                if(i > 4) { // exclude first counts that could be delayed
                     _timeaccum += _time;
                 }
             }
         }
-        return _timeaccum / (_iterations - 1.0);
+        return _timeaccum / (_iterations - 5);
     } else { // if the video source is a video file
         return 1000.0 / _vcptr->get(cv::CAP_PROP_FPS);
     }

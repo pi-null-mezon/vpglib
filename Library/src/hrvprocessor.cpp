@@ -48,7 +48,7 @@ void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLeng
     for(int i = 0; i < _counts; i++) {
 
         if(i*timestepms() > _duration) {
-           j++; // (1) do not warry about j it will not exceed (_intervalsLength - 1)
+           j++; // (1) do not worry about 'j' it will not exceed (_intervalsLength - 1)
            _duration += _vIntervals[j];
         }
 

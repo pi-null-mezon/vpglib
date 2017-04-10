@@ -96,6 +96,23 @@ int PeakDetector::getIntervalsPosition() const
     return curposforinterval;
 }
 
+double PeakDetector::averageCardiointervalms(int _n) const
+{
+    if(_n == 0) {
+        return 0.0;
+    }
+
+    if(_n < 0) {
+        _n = getIntervalsLength();
+    }
+    double _tms = 0.0;
+    int _startpos = curposforinterval - 1;
+    for(int i = 0; i < _n; ++i) {
+        _tms += v_Intervals[__seek(_startpos - i)];
+    }
+    return _tms / _n;
+}
+
 void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms)
 {
     curposforsignal = 0;
