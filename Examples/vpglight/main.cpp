@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
             faceproc.enrollImage(frame, s, t);
             if(inputVideofilename) {
-                pulseproc.update(s,framePeriod); // if videofile is used as source then we should use knowing frame period
+                pulseproc.update(s,framePeriod); // if videofile is used as source then we should use frame period from the file
             } else {
                 pulseproc.update(s,t);
             }
@@ -200,7 +200,8 @@ int main(int argc, char *argv[])
             cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(11, frame.rows - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
             cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
 
-            cv::imshow("vpglib test", frame);
+            cv::namedWindow(APP_NAME, cv::WINDOW_NORMAL);
+            cv::imshow(APP_NAME, frame);
         } else {
             break; // stop processing when frame can not be read
         }
@@ -212,8 +213,11 @@ int main(int argc, char *argv[])
         }
 
         if(timeout < 0.0) {
-
-            frequency = static_cast<unsigned int>(pulseproc.computeFrequency());
+            if(frequency == 0 || measInt_ms > 2000.0) {
+                frequency = static_cast<unsigned int>(pulseproc.computeFrequency());
+            } else {
+                frequency = (frequency + static_cast<unsigned int>(pulseproc.computeFrequency()))/2;
+            }
             snr = pulseproc.getSNR();
 
             if(ohrfs.is_open())

@@ -46,8 +46,15 @@ public:
     int getIntervalsLength() const;
 
     double getCurrentInterval() const;
-
     int getIntervalsPosition() const;
+
+    /**
+     * @brief returns average of the last _n cardiointervals
+     * @param _n - how many intervals should be counted (if n < 0 than full length of the v_Intervals should be counted)
+     * @return average value of the cardiointerval
+     */
+    double averageCardiointervalms(int _n=9) const;
+
 
 private:
     void __init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms);

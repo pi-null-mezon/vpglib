@@ -27,7 +27,9 @@ int main(int argc, char *argv[])
             return -1;
         }
 
+        std::cout << "Measure frame period... " << std::endl;
         double framePeriod = faceproc.measureFramePeriod(&capture); // ms
+        std::cout << framePeriod << " ms" << std::endl;
         vpg::PulseProcessor pulseproc(framePeriod); // note it is convinirnt to use default constructor only if frame period is near to 33 ms
 
         // Add peak detector for the cardio intervals evaluation and analysis
@@ -54,6 +56,7 @@ int main(int argc, char *argv[])
         std::cout << "Press escape to exit..." << std::endl;
 
         // Start video processing cycle
+        cv::Rect faceRect;
         while(true) {
             if(capture.read(frame)) {
 
@@ -61,42 +64,49 @@ int main(int argc, char *argv[])
                 faceproc.enrollImage(frame, s, t);
                 pulseproc.update(s,t);
 
-                // Draw hr
-                cv::String _hrstr = std::to_string(_hr) + " bpm (snr: " + num2str(_snr,2) + " dB)";
-                cv::putText(frame, _hrstr, cv::Point(20,40), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, _hrstr, cv::Point(19,39), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255,255,255), 1, CV_AA);
+                faceRect = faceproc.getFaceRect();
+                if(faceRect.area() > 0) {
+                    cv::rectangle(frame, faceRect, cv::Scalar(255,255,255), 1, CV_AA);
+                    // Draw hr
+                    cv::String _hrstr = std::to_string(_hr) + " bpm (snr: " + num2str(_snr,2) + " dB)";
+                    cv::putText(frame, _hrstr, cv::Point(20,40), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0,0,0), 1, CV_AA);
+                    cv::putText(frame, _hrstr, cv::Point(19,39), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255,255,255), 1, CV_AA);
 
-                // Draw current cardio interval
-                cv::String _cardiointerval = num2str(peakdetector.getCurrentInterval(),0) + " ms";
-                cv::putText(frame, _cardiointerval, cv::Point(20,70), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, _cardiointerval, cv::Point(19,69), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(127,0,127), 1, CV_AA);
+                    // Draw current cardio interval
+                    cv::String _cardiointerval = "Last interval: " + num2str(peakdetector.getCurrentInterval(),0) + " ms";
+                    cv::putText(frame, _cardiointerval, cv::Point(20,70), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+                    cv::putText(frame, _cardiointerval, cv::Point(19,69), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(127,0,127), 1, CV_AA);
+                    cv::String _avcardioint = "HR: " + num2str(60000.0 / peakdetector.averageCardiointervalms(9),0) + " bpm";
+                    cv::putText(frame, _avcardioint, cv::Point(20,100), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+                    cv::putText(frame, _avcardioint, cv::Point(19,99), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(127,0,127), 1, CV_AA);
 
-                // Draw cardio intervals history
-                float xorigin = 10.0;
-                float yorigin = frame.rows;
-                float xstep = (float)(frame.cols - xorigin*2.0f) / (cardiointervalslength - 1);
-                float ystep = (float)(frame.rows) / 4000.0f;
-                for(int i = 0; i < cardiointervalslength-1; i++) {
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - cardiointervals[(i+1)]*ystep),cv::Scalar(127,0,127),1,CV_AA);
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin), cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                    // Draw cardio intervals history
+                    float xorigin = 10.0;
+                    float yorigin = frame.rows;
+                    float xstep = (float)(frame.cols - xorigin*2.0f) / (cardiointervalslength - 1);
+                    float ystep = (float)(frame.rows) / 4000.0f;
+                    for(int i = 0; i < cardiointervalslength-1; i++) {
+                        cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - cardiointervals[(i+1)]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                        cv::line(frame, cv::Point(xorigin + i*xstep, yorigin), cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                    }
+                    cv::line(frame, cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin), cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin - cardiointervals[cardiointervalslength-1]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+
+                    // Draw ppg-signal
+                    xstep = (float)(frame.cols - xorigin*2.0f) / (length - 1);
+                    ystep *= 100.0;
+                    yorigin = (frame.rows) * 0.9f;
+                    for(int i = 0; i < length-1; i++)
+                        cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - signal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - signal[(i+1)]*ystep),cv::Scalar(0,200,0),1,CV_AA);
+
+                    // Draw binary-signal from PeakDetector
+                    for(int i = 0; i < length-1; i++)
+                        cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - binarysignal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - binarysignal[(i+1)]*ystep),cv::Scalar(0,0,255),1,CV_AA);
+
+                    // Draw frame time
+                    cv::String _periodstr = num2str(t) + " ms";
+                    cv::putText(frame, _periodstr, cv::Point(20,frame.rows-10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+                    cv::putText(frame, _periodstr, cv::Point(19,frame.rows-11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
                 }
-                cv::line(frame, cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin), cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin - cardiointervals[cardiointervalslength-1]*ystep),cv::Scalar(127,0,127),1,CV_AA);
-
-                // Draw ppg-signal
-                xstep = (float)(frame.cols - xorigin*2.0f) / (length - 1);
-                ystep *= 100.0;
-                yorigin = (frame.rows) * 0.9f;
-                for(int i = 0; i < length-1; i++)
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - signal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - signal[(i+1)]*ystep),cv::Scalar(0,200,0),1,CV_AA);
-
-                // Draw binary-signal from PeakDetector
-                for(int i = 0; i < length-1; i++)
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - binarysignal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - binarysignal[(i+1)]*ystep),cv::Scalar(0,0,255),1,CV_AA);
-
-                // Draw frame time
-                cv::String _periodstr = num2str(t) + " ms";
-                cv::putText(frame, _periodstr, cv::Point(20,frame.rows-10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, _periodstr, cv::Point(19,frame.rows-11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
 
                 cv::imshow("Video probe", frame);
             }
@@ -135,10 +145,19 @@ int main(int argc, char *argv[])
 template <typename T>
 std::string num2str(T value, unsigned char precision)
 {
-    if(precision > 0)
-        return std::to_string(static_cast<long>(value)) + "." + std::to_string( static_cast<long>(std::abs(value - static_cast<long>(value))*std::pow(10.0,precision)) );
-    else
-        return std::to_string(static_cast<long>(value));
+    std::string _fullstring = std::to_string(value);
+    size_t _n = 0;
+    for(size_t i = 0; i < _fullstring.size(); ++i) {
+        _n++;
+        if(_fullstring[i] == '.')
+            break;
+    }
+    if(precision > 0) {
+        _n += precision;
+    } else {
+        _n -= 1;
+    }
+    return std::string(_fullstring.begin(), _fullstring.begin() + _n);
 }
 
 void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color)
