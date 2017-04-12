@@ -22,7 +22,6 @@ int main(int argc, char *argv[])
         return -2;
     }
 
-
     // Create FaceProcessor instance
     cv::String facecascadefilename;
     #ifdef CASCADE_FILENAME
