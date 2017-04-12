@@ -26,6 +26,7 @@
 *.exe
 *.out
 *.app
+*.pdb
 
 # Paths
 *.pro.user*
