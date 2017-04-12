@@ -7,6 +7,7 @@
 CONFIG -= qt
 
 TARGET = hrvanalyser
+VERSION = 1.0.0.0
 
 CONFIG += console
 CONFIG -= app_bundle

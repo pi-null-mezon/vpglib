@@ -36,7 +36,7 @@ void FaceProcessor::__init()
     m_pos = 0;
     m_nofaceframes = 0;
     f_firstface = true;
-    m_minFaceSize = cv::Size(100,120);
+    m_minFaceSize = cv::Size(80,100);
     m_blurSize = cv::Size(3,3);
 }
 
