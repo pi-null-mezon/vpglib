@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
         }
         // After frame processing We could want to evaluate heart rate, here at each 32-th frame
         if(k % 33 == 0) {
-            //_hr = (_hr + (int)pulseproc.computeFrequency())/2;
-            _hr = (int)pulseproc.computeFrequency();
+            _hr = (_hr + (int)pulseproc.computeFrequency())/2;
+            //_hr = (int)pulseproc.computeFrequency();
             _snr = pulseproc.getSNR();
         }
 
