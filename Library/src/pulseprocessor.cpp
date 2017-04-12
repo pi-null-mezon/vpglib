@@ -23,7 +23,7 @@ PulseProcessor::PulseProcessor(double dT_ms, ProcessType type)
 {
     switch(type){
         case HeartRate:
-            __init(7000.0, 400.0, 300.0, dT_ms, type);
+            __init(7500.0, 400.0, 350.0, dT_ms, type);
             break;
     }
 }
@@ -183,7 +183,7 @@ double PulseProcessor::computeFrequency()
         double bias = (double)i_maxpower - ( signal_moment / signal_power );
         m_snr *= (1.0 / (1.0 + bias*bias));
     }
-    if(m_snr > 4.0)
+    if(m_snr > 3.0)
         m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
     return m_Frequency;

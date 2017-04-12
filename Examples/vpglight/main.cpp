@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     #ifdef DESIGNBUILD
     vpg::FaceProcessor faceproc(std::string(OPENCV_DATA_DIR) + std::string("/haarcascades/haarcascade_frontalface_alt2.xml"));
     #else
-    vpg::FaceProcessor faceproc(std::string("haarcascades/haarcascade_frontalface_alt2.xml"));
+    vpg::FaceProcessor faceproc(std::string("haarcascade_frontalface_alt2.xml"));
     #endif
 
     std::cout << "Measure frame period... " << std::endl;
