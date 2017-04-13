@@ -70,7 +70,11 @@ int main(int argc, char *argv[])
 
             // Essential part for the PPG signal extraction, only 2 strings should be called for the each new frame
             faceproc.enrollImage(frame, s, t);
-            pulseproc.update(s,t);
+            if(argc > 1) {
+                pulseproc.update(s,framePeriod);
+            } else {
+                pulseproc.update(s,t);
+            }
 
             faceRect = faceproc.getFaceRect();
             if(faceRect.area() > 0) {
@@ -125,8 +129,7 @@ int main(int argc, char *argv[])
         }
         // After frame processing We could want to evaluate heart rate, here at each 32-th frame
         if(k % 33 == 0) {
-            _hr = (_hr + (int)pulseproc.computeFrequency())/2;
-            //_hr = (int)pulseproc.computeFrequency();
+            _hr = (int)pulseproc.computeFrequency();
             _snr = pulseproc.getSNR();
         }
 
