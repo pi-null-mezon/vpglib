@@ -224,14 +224,4 @@ void PulseProcessor::setPeakDetector(PeakDetector *pointer)
     pt_peakdetector = pointer;
 }
 
-int PulseProcessor::__loop(int d) const
-{
-    return ((m_length + (d % m_length)) % m_length);
-}
-
-int PulseProcessor::__seek(int d) const
-{
-    return ((m_filterlength + (d % m_filterlength)) % m_filterlength);
-}
-
 } // end of namespace vpg
