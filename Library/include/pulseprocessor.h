@@ -133,6 +133,17 @@ private:
 
     PeakDetector *pt_peakdetector = 0;
 };
+
+inline int PulseProcessor::__loop(int d) const
+{
+    return ((m_length + (d % m_length)) % m_length);
+}
+
+inline int PulseProcessor::__seek(int d) const
+{
+    return ((m_filterlength + (d % m_filterlength)) % m_filterlength);
+}
+
 }
 //-------------------------------------------------------
 #endif // PULSEPROCESSOR_H

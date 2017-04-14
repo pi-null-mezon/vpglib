@@ -120,12 +120,14 @@ int main(int argc, char *argv[])
                     cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - binarysignal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - binarysignal[(i+1)]*ystep),cv::Scalar(0,0,255),1,CV_AA);
 
                 // Draw frame time
-                cv::String _periodstr = num2str(t) + " ms";
+                cv::String _periodstr = num2str(t) + " ms, press 's' to open capture device settings dialog";
                 cv::putText(frame, _periodstr, cv::Point(20,frame.rows-10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
                 cv::putText(frame, _periodstr, cv::Point(19,frame.rows-11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
             }
 
             cv::imshow("Video probe", frame);
+        } else {
+            break;
         }
         // After frame processing We could want to evaluate heart rate, here at each 32-th frame
         if(k % 33 == 0) {
@@ -134,7 +136,7 @@ int main(int argc, char *argv[])
         }
 
         // Evaluate and draw HRV signal
-        if(k % 5 == 0) {
+        if(k % 33 == 0) {
             hrvproc.enrollIntervals(peakdetector.getIntervalsVector(), peakdetector.getIntervalsLength());
             drawDataWindow("HRV Signal, [milliseconds]",cv::Size(640,480),hrvproc.getHRVSignal(),hrvproc.getHRVSignalLength(), 1500.0, 0.0, cv::Scalar(0,127,255));
             //drawDataWindow("Amplitude Fourier spectrum of HRV Signal",cv::Size(640,480),hrvproc.getHRVAmplitudeSpectrum(),hrvproc.getHRVAmplitudeSpectrumLength(), 2.0e3, 0.0, cv::Scalar(0,0,255));

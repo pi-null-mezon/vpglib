@@ -110,6 +110,14 @@ private:
     bool __skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const;
     void __init();
 };
+
+inline bool FaceProcessor::__skinColor(unsigned char vR, unsigned char vG, unsigned char vB) const
+{
+    if( (vR > 95) && (vR > vG) && (vG > 40) && (vB > 20) && ((vR - std::min(vG,vB)) > 5) && ((vR - vG) > 5) )
+        return true;
+    else
+        return false;
+}
 }
 //-------------------------------------------------------
 #endif // FACEPROCESSOR_H

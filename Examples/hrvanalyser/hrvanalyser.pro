@@ -18,7 +18,7 @@ SOURCES += main.cpp
 
 include($${PWD}/../../shared/vpglib.pri)
 
-#CONFIG += designbuild
+CONFIG += designbuild
 
 designbuild {
     message(Design build mode selected)
