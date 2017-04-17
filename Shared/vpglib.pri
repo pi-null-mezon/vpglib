@@ -1,4 +1,4 @@
-VPGLIBPATH = $${PWD}/../library
+VPGLIBPATH = $${PWD}/../Library
 
 defineReplace(qtLibraryName) {
    unset(LIBRARY_NAME)
@@ -17,6 +17,12 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x64
 } else {
     ARCHITECTURE = x86
+}
+
+linux {
+    DEFINES += Q_OS_LINUX
+    ARCHITECTURE  = arm32
+    COMPILER = gcc
 }
 
 LIBS += -L$${VPGLIBPATH}/bin/$${ARCHITECTURE}/$${COMPILER}

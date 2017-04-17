@@ -12,6 +12,7 @@ DEFINES += APP_DESIGNER=\\\"Alex.A.Taranov\\\" \
            APP_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += console
+CONFIG += c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
