@@ -19,9 +19,17 @@
 #define PEAKDETECTOR_H
 //-------------------------------------------------------
 #ifdef DLL_BUILD_SETUP
-    #define DLLSPEC __declspec(dllexport)
+    #ifdef Q_OS_LINUX
+        #define DLLSPEC __attribute__((visibility("default")))
+    #else
+        #define DLLSPEC __declspec(dllexport)
+    #endif
 #else
-    #define DLLSPEC __declspec(dllimport)
+    #ifdef Q_OS_LINUX
+        #define DLLSPEC
+    #else
+        #define DLLSPEC __declspec(dllimport)
+    #endif
 #endif
 //-------------------------------------------------------
 #include "opencv2/core.hpp"
