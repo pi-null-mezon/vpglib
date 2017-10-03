@@ -40,6 +40,12 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x86
 }
 
+linux {
+    DEFINES += Q_OS_LINUX
+    ARCHITECTURE  = arm32
+    COMPILER = gcc
+}
+
 DESTDIR = $${PWD}/bin/$${ARCHITECTURE}/$${COMPILER}
 
 
