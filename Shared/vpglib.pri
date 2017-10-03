@@ -19,10 +19,16 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
     ARCHITECTURE = x86
 }
 
-message($${VPGLIBPATH}/bin/$${ARCHITECTURE}/$${COMPILER})
+linux {
+    DEFINES += Q_OS_LINUX
+    ARCHITECTURE  = arm32
+    COMPILER = gcc
+}
 
 LIBS += -L$${VPGLIBPATH}/bin/$${ARCHITECTURE}/$${COMPILER}
 LIBS += -l$$qtLibraryName(vpg)
+
+message($${VPGLIBPATH}/bin/$${ARCHITECTURE}/$${COMPILER})
 
 INCLUDEPATH += $${VPGLIBPATH}/include
 
