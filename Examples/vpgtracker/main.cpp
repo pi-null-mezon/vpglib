@@ -16,6 +16,8 @@ std::string num2str(T value, unsigned char precision=1);
 
 void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d);
 
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color);
+
 const cv::String keys = "{help h      |     | print help}"
                         "{device d    |  0  | video capture device enumerator}"
                         "{facesize    | 256 | horizontal size of the face region}";
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
         std::cout << "Could not load eye detector resources! Abort...\n";
         return -1;
     }
-    FaceTracker facetracker(5, FaceTracker::FaceShape);
+    FaceTracker facetracker(64, FaceTracker::NoAlign);
     facetracker.setFaceClassifier(&facedet);
     facetracker.setEyeClassifier(&eyedet);
 
@@ -125,22 +127,28 @@ int main(int argc, char *argv[])
         faceregion = facetracker.getResizedFaceImage(frame,targetfacesize);
         if(!faceregion.empty()) {
            cv::imshow("Probe",faceregion);
+           faceproc.enrollImagePart(faceregion,s,t);
+           pulseproc.update(s,t);
+           drawDataWindow("VPG", cv::Size(640,360), signal, length,3.0,-3.0,cv::Scalar(0,255,0));
+
            cv::RotatedRect _faceRrect = facetracker.getFaceRotatedRect();
            cv::Point2f _vert[4];
            _faceRrect.points(_vert);
            for(unsigned char i = 0; i < 4; ++i) {
                cv::line(frame,_vert[i], _vert[(i+1)%4],cv::Scalar(0,0,255),1,CV_AA);
            }
-           dlib::full_object_detection _faceshape = facetracker.getFaceShape();
-           for(size_t i = 0; i < _faceshape.num_parts(); ++i) {
-               dlib::point _p = _faceshape.part(i), _tp;
-               float _anglerad = - CV_PI * _faceRrect.angle / 180.0;
-               _tp.x() = _p.x()*std::cos(_anglerad) + _p.y()*std::sin(_anglerad);
-               _tp.y() = - _p.x()*std::sin(_anglerad) + _p.y()*std::cos(_anglerad);
-               _tp += dlib::point(_faceRrect.center.x,_faceRrect.center.y);
-               _faceshape.part(i) = _tp;
-           }
-           render_face_shape(frame,_faceshape);
+           if(facetracker.getFaceAlignMethod() == FaceTracker::FaceShape) {
+               dlib::full_object_detection _faceshape = facetracker.getFaceShape();
+               for(size_t i = 0; i < _faceshape.num_parts(); ++i) {
+                   dlib::point _p = _faceshape.part(i), _tp;
+                   float _anglerad = - CV_PI * _faceRrect.angle / 180.0;
+                   _tp.x() = _p.x()*std::cos(_anglerad) + _p.y()*std::sin(_anglerad);
+                   _tp.y() = - _p.x()*std::sin(_anglerad) + _p.y()*std::cos(_anglerad);
+                   _tp += dlib::point(_faceRrect.center.x,_faceRrect.center.y);
+                   _faceshape.part(i) = _tp;
+               }
+               render_face_shape(frame,_faceshape);
+            }
         }
 
 
@@ -172,16 +180,15 @@ std::string num2str(T value, unsigned char precision)
     for(size_t i = 0; i < _fullstring.size(); ++i) {        
         if(_fullstring[i] == '.')
             break;
-        _n++;
+                _n++;
     }
     if(precision > 0) {
-        _n += precision;
+        _n += precision + 1;
     }
     return std::string(_fullstring.begin(), _fullstring.begin() + _n);
 }
 
 // Grabbed from http://www.learnopencv.com/speeding-up-dlib-facial-landmark-detector/
-
 void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int start, const int end, bool isClosed = false)
 {
     std::vector <cv::Point> points;
@@ -210,4 +217,35 @@ void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d)
     draw_polyline(img, d, 48, 59, true);    // Outer lip
     draw_polyline(img, d, 60, 67, true);    // Inner lip
 
+}
+
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color)
+{
+    if(_datalength > 0 && _windowsize.area() > 0 && _data != NULL ) {
+
+        cv::Mat _colorplot = cv::Mat::zeros(_windowsize, CV_8UC3);
+        cv::rectangle(_colorplot,cv::Rect(0,0,_colorplot.cols,_colorplot.rows),cv::Scalar(15,15,15), -1);
+
+        int _ticksX = 10;
+        double _tickstepX = static_cast<double>(_windowsize.width)/ _ticksX ;
+        for(int i = 1; i < _ticksX ; i++)
+            cv::line(_colorplot, cv::Point2f(i*_tickstepX,0), cv::Point2f(i*_tickstepX,_colorplot.rows), cv::Scalar(100,100,100), 1);
+
+        int _ticksY = 8;
+        double _tickstepY = static_cast<double>(_windowsize.height)/ _ticksY ;
+        for(int i = 1; i < _ticksY ; i++) {
+            cv::line(_colorplot, cv::Point2f(0,i*_tickstepY), cv::Point2f(_colorplot.cols,i*_tickstepY), cv::Scalar(100,100,100), 1);
+            cv::putText(_colorplot, num2str(_ymax - i * (_ymax-_ymin)/_ticksY), cv::Point(5, i*_tickstepY - 10), CV_FONT_HERSHEY_SIMPLEX, 0.33, cv::Scalar(150,150,150), 1, CV_AA);
+        }
+
+        double invstepY = (_ymax - _ymin) / _windowsize.height;
+        double stepX = static_cast<double>(_windowsize.width) / (_datalength - 1);
+
+        for(int i = 0; i < _datalength - 1; i++) {
+            cv::line(_colorplot, cv::Point2f(i*stepX, _windowsize.height - (_data[i] - _ymin)/invstepY),
+                                 cv::Point2f((i+1)*stepX, _windowsize.height - (_data[i+1] - _ymin)/invstepY),
+                                 _color, 1, CV_AA);
+        }
+        cv::imshow(_title, _colorplot);
+    }
 }

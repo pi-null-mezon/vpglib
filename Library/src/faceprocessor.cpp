@@ -36,7 +36,7 @@ void FaceProcessor::__init()
     m_pos = 0;
     m_nofaceframes = 0;
     f_firstface = true;
-    m_minFaceSize = cv::Size(80,100);
+    m_minFaceSize = cv::Size(80,80);
     m_blurSize = cv::Size(3,3);
 }
 
@@ -59,8 +59,9 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
             scaleX = (double)rgbImage.cols / 640.0;
             scaleY = (double)rgbImage.rows / 480.0;
         }
-    } else
+    } else {
         img = rgbImage;
+    }
 
     std::vector<cv::Rect> faces;
     m_classifier.detectMultiScale(img, faces, 1.15, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
@@ -116,6 +117,42 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     m_markTime = cv::getTickCount();
     if(area > static_cast<unsigned long>(m_minFaceSize.area()/2)) {
         resV = (double)green / area;
+    } else {
+        resV = 0.0;
+    }
+}
+
+void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, double &resT, cv::Rect roirect)
+{
+    if(roirect == cv::Rect()) {
+        roirect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
+    }
+    unsigned long green = 0;
+    unsigned long area = 0;
+    if(roirect.area() > 0) {
+        cv::Mat region = cv::Mat(rgbImage, roirect).clone();
+        cv::blur(region,region, m_blurSize);
+        unsigned char *ptr;
+        unsigned char tR = 0, tG = 0, tB = 0;
+        #pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
+        for(int j = 0; j < roirect.height; j++) {
+            ptr = region.ptr(j);
+            for(int i = 0; i < roirect.width; i++) {
+                tB = ptr[3*i];
+                tG = ptr[3*i+1];
+                tR = ptr[3*i+2];
+                if( __skinColor(tR, tG, tB) ) {
+                    area++;
+                    green += tG;
+                }
+            }
+        }
+    }
+
+    resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
+    m_markTime = cv::getTickCount();
+    if(area > static_cast<unsigned long>(m_minFaceSize.area()/2)) {
+        resV = ((double)green) / area;
     } else {
         resV = 0.0;
     }
