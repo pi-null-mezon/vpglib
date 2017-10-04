@@ -67,11 +67,20 @@ public:
     virtual ~FaceProcessor();
     /**
      * Enroll image to produce PPG-signal count
-     * @param rgb - input image, BGR format only
+     * @param rgbImage - input image, BGR format only
      * @param resV - where result count should be written
      * @param resT - where processing time should be written
+     * @note  face detection will be performed inside the function
      */
     void enrollImage(const cv::Mat &rgbImage, double &resV, double &resT);
+    /**
+     * Enroll image's roirect to produce PPG-signal count
+     * @param rgbImage - input image, BGR format only
+     * @param resV - where result count should be written
+     * @param resT - where processing time should be written
+     * @note  no face detection will be performed, function waits that you already detect face somehow
+     */
+    void enrollImagePart(const cv::Mat &rgbImage, double &resV, double &resT, cv::Rect roirect=cv::Rect());
     /**
      * Get cv::Rect that bounds face on image
      * @return coordinates of face on image in cv::Rect form
