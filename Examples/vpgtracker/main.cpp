@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         std::cout << "Could not load eye detector resources! Abort...\n";
         return -1;
     }
-    FaceTracker facetracker(64, FaceTracker::NoAlign);
+    FaceTracker facetracker(9, FaceTracker::FaceShape);
     facetracker.setFaceClassifier(&facedet);
     facetracker.setEyeClassifier(&eyedet);
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
         faceregion = facetracker.getResizedFaceImage(frame,targetfacesize);
         if(!faceregion.empty()) {
            cv::imshow("Probe",faceregion);
-           faceproc.enrollImagePart(faceregion,s,t);
+           faceproc.enrollImagePart(faceregion,s,t/*,cv::Rect(faceregion.cols/12.0,0,faceregion.cols/1.2,faceregion.rows/3.0)*/);
            pulseproc.update(s,t);
            drawDataWindow("VPG", cv::Size(640,360), signal, length,3.0,-3.0,cv::Scalar(0,255,0));
 
