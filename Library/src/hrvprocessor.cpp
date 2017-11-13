@@ -29,7 +29,7 @@ HRVProcessor::~HRVProcessor()
 {
 }
 
-void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLength)
+void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLength, bool _computespectrum)
 {
     // Let's determine how many of counts do we really need
     double _totalduration = 0.0;
@@ -63,22 +63,24 @@ void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLeng
     if(f_smooth)
         cv::blur(m_intervalsmat, m_intervalsmat, cv::Size(5,1));
 
+    if(_computespectrum) {
     // Evaluate dft of the HRV signal
-    cv::dft(m_intervalsmat, m_dftmat);
-    const double *_pdft = m_dftmat.ptr<const double>(0);
+        cv::dft(m_intervalsmat, m_dftmat);
+        const double *_pdft = m_dftmat.ptr<const double>(0);
 
-    m_amplitudespectrum = cv::Mat(1, m_dftmat.cols/2 + 1, CV_64F);
-    double *_amp = m_amplitudespectrum.ptr<double>(0);
+        m_amplitudespectrum = cv::Mat(1, m_dftmat.cols/2 + 1, CV_64F);
+        double *_amp = m_amplitudespectrum.ptr<double>(0);
 
-    // complex conjugated symmetry, read on http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#dft
-    _amp[0] = 0.0; // exclude zero count which is equal to the mean value of the signal
-    if(m_dftmat.cols % 2 == 0) {// Even number of counts
-        for(int i = 1; i < m_dftmat.cols/2; i++)
-            _amp[i] = std::sqrt(_pdft[2*i-1]*_pdft[2*i-1] + _pdft[2*i]*_pdft[2*i]);
-        _amp[m_dftmat.cols/2] = std::sqrt(_pdft[m_dftmat.cols-1]*_pdft[m_dftmat.cols-1]);
-    } else {
-        for(int i = 1; i <= m_dftmat.cols/2; i++)
-            _amp[i] = std::sqrt(_pdft[2*i-1]*_pdft[2*i-1] + _pdft[2*i]*_pdft[2*i]);
+        // complex conjugated symmetry, read on http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#dft
+        _amp[0] = 0.0; // exclude zero count which is equal to the mean value of the signal
+        if(m_dftmat.cols % 2 == 0) {// Even number of counts
+            for(int i = 1; i < m_dftmat.cols/2; i++)
+                _amp[i] = std::sqrt(_pdft[2*i-1]*_pdft[2*i-1] + _pdft[2*i]*_pdft[2*i]);
+            _amp[m_dftmat.cols/2] = std::sqrt(_pdft[m_dftmat.cols-1]*_pdft[m_dftmat.cols-1]);
+        } else {
+            for(int i = 1; i <= m_dftmat.cols/2; i++)
+                _amp[i] = std::sqrt(_pdft[2*i-1]*_pdft[2*i-1] + _pdft[2*i]*_pdft[2*i]);
+        }
     }
 }
 

@@ -48,7 +48,7 @@ public:
 
     ~HRVProcessor();
 
-    void enrollIntervals(const double *_vIntervals, int _intervalsLength);
+    void enrollIntervals(const double *_vIntervals, int _intervalsLength, bool _computespectrum=true);
 
     const double *getHRVSignal() const;
     int getHRVSignalLength() const;

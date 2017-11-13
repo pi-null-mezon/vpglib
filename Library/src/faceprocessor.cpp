@@ -126,6 +126,8 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, doubl
 {
     if(roirect == cv::Rect()) {
         roirect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
+    } else {
+        roirect = roirect & cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
     }
     unsigned long green = 0;
     unsigned long area = 0;
@@ -151,7 +153,7 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, doubl
 
     resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
-    if(area > static_cast<unsigned long>(m_minFaceSize.area()/2)) {
+    if(area > 16) {
         resV = ((double)green) / area;
     } else {
         resV = 0.0;
