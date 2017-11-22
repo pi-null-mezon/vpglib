@@ -21,14 +21,15 @@ std::string num2str(T value, unsigned char precision=1);
 
 void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d);
 
-void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const double *> _data, const int _datalength, double _ymax, double _ymin, const std::vector<cv::Scalar> _colors);
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const double *> _data, const int _datalength, double _ymax, double _ymin, const std::vector<cv::Scalar> &_colors);
 
 void selectRegionByMouse(int event, int x, int y, int flags, void* userdata);
 
 const cv::String keys = "{help h          |                 | - print help}"
                         "{device d        |       0         | - video capture device enumerator}"
                         "{facesize        |      256        | - horizontal size of the face region}"
-                        "{outputfilename o|    facevpg.csv  | - output filename that contains all the measurements}";
+                        "{outputfilename o|    facevpg.csv  | - output filename that contains all the measurements}"
+                        "{colorchannel c  |     green       | - color channel that should be used to compute vpg signal, allowed names: red, green, blue. You also be able to toggle color channels interctively by r, g, b keys}";
 
 int main(int argc, char *argv[])
 {
@@ -118,9 +119,33 @@ int main(int argc, char *argv[])
     double framePeriod = faceproc.measureFramePeriod(&videocapture); // ms
     std::cout << framePeriod << " ms" << std::endl;
 
-    std::vector<cv::Scalar> _vcolors;
-    _vcolors.push_back(cv::Scalar(0,127,255)); // orange
-    _vcolors.push_back(cv::Scalar(255,127,127)); // magenta
+    std::vector<std::vector<cv::Scalar>> _vvc;
+    std::vector<cv::Scalar> _colors;
+    // Red
+    _colors.push_back(cv::Scalar(0,127,255));
+    _colors.push_back(cv::Scalar(0,0,255));
+    _vvc.push_back(_colors);
+    _colors.clear();
+    //Green
+    _colors.push_back(cv::Scalar(0,255,255));
+    _colors.push_back(cv::Scalar(0,255,0));
+    _vvc.push_back(_colors);
+    _colors.clear();
+    //Blue
+    _colors.push_back(cv::Scalar(255,127,0));
+    _colors.push_back(cv::Scalar(255,127,127));
+    _vvc.push_back(_colors);
+
+    std::string _colorchannelstr = cmdargsparser.get<std::string>("colorchannel");
+    size_t _colorset = 0;
+    if(_colorchannelstr.compare("red") == 0) {
+        _colorset = 0;
+    } else if(_colorchannelstr.compare("green") == 0) {
+        _colorset = 1;
+    } else if(_colorchannelstr.compare("blue") == 0) {
+        _colorset = 2;
+    }
+
     vpg::PulseProcessor pulseprocfirst(framePeriod), pulseprocsecond(framePeriod);
     std::vector<const double *> _vpgsignals;
     _vpgsignals.push_back(pulseprocfirst.getSignal());
@@ -135,7 +160,7 @@ int main(int argc, char *argv[])
     _vhrvsignals.push_back(peakdetsecond.getIntervalsVector());
     // Create local variables to store frame and processing values
     double _hrupdateIntervalms = 0.0;
-    double s = 0.0, t = 0.0;
+    double _r = 0.0, _g = 0.0, _b = 0.0, t = 0.0;
     std::pair<unsigned int, unsigned int> _hr(pulseprocfirst.getFrequency(),pulseprocsecond.getFrequency());
     std::pair<double, double> _snr(0.0,0.0);
 
@@ -151,6 +176,7 @@ int main(int argc, char *argv[])
     std::cout << "This session results will be written to '" << cmdargsparser.get<std::string>("outputfilename") << "'";
     std::time_t _timet = std::time(0);
     struct std::tm * now = localtime( &_timet );
+    ofs << "This file has been created by " << APP_NAME << " v." << APP_VERSION << std::endl;
     ofs << "Record was started at "
         << std::setw(2) << std::setfill('0') << now->tm_mday << '.'
         << std::setw(2) << std::setfill('0') << (now->tm_mon + 1) << '.'
@@ -159,7 +185,7 @@ int main(int argc, char *argv[])
         << std::setw(2) << std::setfill('0') << (now->tm_min) << ":"
         << std::setw(2) << std::setfill('0') << now->tm_sec << std::endl
         << "Measurement interval " << framePeriod << "[ms]" << std::endl
-        << "VPG_C1,\tVPG_C2";
+        << "R_C1,\tG_C1,\tB_C1,\tR_C2,\tG_C2,\tB_C2,\tVPG_C1,\tVPG_C2";
     for(unsigned int k = 0; k < 68; ++k)
         ofs << ",\tP[" << k << "].X,\tP[" << k << "].Y";
     ofs << std::fixed << std::endl;
@@ -171,11 +197,33 @@ int main(int argc, char *argv[])
 
         faceregion = facetracker.getResizedFaceImage(frame,targetfacesize);
         if(!faceregion.empty()) {
-           faceproc.enrollImagePart(faceregion,s,t,_selectionpair.first);
-           pulseprocfirst.update(s,t);
-           double _dummytime;
-           faceproc.enrollImagePart(faceregion,s,_dummytime,_selectionpair.second);
-           pulseprocsecond.update(s,t);
+           faceproc.enrollImagePart(faceregion,_r,_g,_b,t,_selectionpair.first);
+           ofs << _r << ",\t" << _g << ",\t" << _b << ",\t";
+           switch(_colorset) {
+                case 0:
+                    pulseprocfirst.update(_r,t);
+                    break;
+               case 1:
+                   pulseprocfirst.update(_g,t);
+                   break;
+               case 2:
+                   pulseprocfirst.update(_b,t);
+                   break;
+           }
+           static double _dummytime = 0.0; // it is dummy variable, it is needed because we do not want to modify frame time on the second frame processing call
+           faceproc.enrollImagePart(faceregion,_r,_g,_b,_dummytime,_selectionpair.second);
+           ofs << _r << ",\t" << _g << ",\t" << _b << ",\t";
+           switch(_colorset) {
+                case 0:
+                    pulseprocsecond.update(_r,t);
+                    break;
+               case 1:
+                   pulseprocsecond.update(_g,t);
+                   break;
+               case 2:
+                   pulseprocsecond.update(_b,t);
+                   break;
+           }
            _hrupdateIntervalms += t;
            if(_hrupdateIntervalms > 1000.0) {
                _hr.first = (_hr.first + pulseprocfirst.computeFrequency() + (60000.0 / peakdetfirst.averageCardiointervalms())) / 3.0;
@@ -186,15 +234,15 @@ int main(int argc, char *argv[])
            }
            std::string _hrstr = "HR: " + std::to_string(_hr.first) + " bpm";
            cv::putText(frame, _hrstr, cv::Point(4,20), CV_FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,CV_AA);
-           cv::putText(frame, _hrstr, cv::Point(3,19), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vcolors[0],1,CV_AA);
+           cv::putText(frame, _hrstr, cv::Point(3,19), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][0],1,CV_AA);
            _hrstr = "HR: " + std::to_string(_hr.second) + " bpm";
            cv::putText(frame, _hrstr, cv::Point(4,45), CV_FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,CV_AA);
-           cv::putText(frame, _hrstr, cv::Point(3,44), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vcolors[1],1,CV_AA);
-           drawDataWindow("VPG (normalized)", cv::Size(640,240), _vpgsignals, pulseprocfirst.getLength(), 3.0,-3.0,_vcolors);
+           cv::putText(frame, _hrstr, cv::Point(3,44), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][1],1,CV_AA);
+           drawDataWindow("VPG (normalized)", cv::Size(640,240), _vpgsignals, pulseprocfirst.getLength(), 3.0,-3.0,_vvc[_colorset]);
            //drawDataWindow("HRV", cv::Size(640,240), _vhrvsignals, peakdetfirst.getIntervalsLength(), 1100.0,300.0,_vcolors);
 
-           cv::rectangle(faceregion,_selectionpair.first,_vcolors[0],1,CV_AA);
-           cv::rectangle(faceregion,_selectionpair.second,_vcolors[1],1,CV_AA);
+           cv::rectangle(faceregion,_selectionpair.first,_vvc[_colorset][0],1,CV_AA);
+           cv::rectangle(faceregion,_selectionpair.second,_vvc[_colorset][1],1,CV_AA);
            cv::imshow("Select regions",faceregion);
 
            cv::RotatedRect _faceRrect = facetracker.getFaceRotatedRect();
@@ -224,8 +272,8 @@ int main(int argc, char *argv[])
         _frametime = (cv::getTickCount() - _timemark) * 1000.0 / cv::getTickFrequency();
         _timemark = cv::getTickCount();
         cv::String _periodstr = num2str(frame.cols,0) + "x" + num2str(frame.rows,0) + " " + num2str(_frametime) + " ms, options keys: s - video settings; esc - quit";
-        cv::putText(frame, _periodstr, cv::Point(4,frame.rows-4), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-        cv::putText(frame, _periodstr, cv::Point(3,frame.rows-5), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+        cv::putText(frame, _periodstr, cv::Point(4,frame.rows-6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
+        cv::putText(frame, _periodstr, cv::Point(3,frame.rows-7), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
         cv::imshow(APP_NAME, frame);
         int c = cv::waitKey(1);
         if( (char)c == 27 ) { // 27 is escape ASCII code
@@ -233,6 +281,15 @@ int main(int argc, char *argv[])
         } else switch(c) {
             case 's':
                 videocapture.set(CV_CAP_PROP_SETTINGS,0.0);
+                break;
+            case 'r':
+                _colorset = 0;
+                break;
+            case 'g':
+                _colorset = 1;
+                break;
+            case 'b':
+                _colorset = 2;
                 break;
         }
     }
@@ -288,7 +345,7 @@ void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d)
 
 }
 
-void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const double *>_data, const int _datalength, double _ymax, double _ymin, const std::vector<cv::Scalar> _colors)
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const double *>_data, const int _datalength, double _ymax, double _ymin, const std::vector<cv::Scalar> &_colors)
 {
     if((_datalength > 0) && (_windowsize.area() > 0) && (_data.size() > 0)  && (_data.size() == _colors.size())) {
 

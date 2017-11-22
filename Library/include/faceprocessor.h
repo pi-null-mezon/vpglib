@@ -76,11 +76,13 @@ public:
     /**
      * Enroll image's roirect to produce PPG-signal count
      * @param rgbImage - input image, BGR format only
-     * @param resV - where result count should be written
+     * @param resRed - where result count should be written (red channel)
+     * @param resGreen - where result count should be written (green channel)
+     * @param resBlue - where result count should be written (blue channel)
      * @param resT - where processing time should be written
      * @note  no face detection will be performed, function waits that you already detect face somehow
      */
-    void enrollImagePart(const cv::Mat &rgbImage, double &resV, double &resT, cv::Rect roirect=cv::Rect());
+    void enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect=cv::Rect());
     /**
      * Get cv::Rect that bounds face on image
      * @return coordinates of face on image in cv::Rect form

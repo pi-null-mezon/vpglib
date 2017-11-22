@@ -122,14 +122,16 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     }
 }
 
-void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, double &resT, cv::Rect roirect)
+void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect)
 {
     if(roirect == cv::Rect()) {
         roirect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
     } else {
         roirect = roirect & cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
     }
+    unsigned long red = 0;
     unsigned long green = 0;
+    unsigned long blue = 0;
     unsigned long area = 0;
     if(roirect.area() > 0) {
         cv::Mat region = cv::Mat(rgbImage, roirect).clone();
@@ -145,7 +147,9 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, doubl
                 tR = ptr[3*i+2];
                 if( __skinColor(tR, tG, tB) ) {
                     area++;
+                    red   += tR;
                     green += tG;
+                    blue  += tB;
                 }
             }
         }
@@ -154,9 +158,13 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resV, doubl
     resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
     if(area > 16) {
-        resV = ((double)green) / area;
+        resRed = ((double)red) / area;
+        resGreen = ((double)green) / area;
+        resBlue = ((double)blue) / area;
     } else {
-        resV = 0.0;
+        resRed = 0.0;
+        resGreen = 0.0;
+        resBlue = 0.0;
     }
 }
 
