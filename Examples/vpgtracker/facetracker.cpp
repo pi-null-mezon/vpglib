@@ -149,8 +149,8 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                     _righteyecenter /= 6;
                 } else if(faceshape.num_parts() == 5) {
                     for(size_t i = 0; i < 2; ++i) {
-                        _lefteyecenter += cv::Point2f(faceshape.part(i).x(),faceshape.part(i).y());
-                        _righteyecenter += cv::Point2f(faceshape.part(i+2).x(),faceshape.part(i+2).y());
+                        _righteyecenter += cv::Point2f(faceshape.part(i).x(),faceshape.part(i).y());
+                        _lefteyecenter += cv::Point2f(faceshape.part(i+2).x(),faceshape.part(i+2).y());
                     }
                     _lefteyecenter /= 2;
                     _righteyecenter /= 2;
