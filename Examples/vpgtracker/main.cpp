@@ -10,11 +10,13 @@
 #include "facetracker.h"
 
 // Comment to make deployment build
-/*
+
 #define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
 #define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
-#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
-*/
+
+#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_5_face_landmarks.dat"
+//#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
+
 
 template <typename T>
 std::string num2str(T value, unsigned char precision=1);
@@ -73,7 +75,7 @@ int main(int argc, char *argv[])
         std::cout << "Could not load eye detector resources! Abort...\n";
         return -1;
     }
-    FaceTracker facetracker(9, FaceTracker::FaceShape);
+    FaceTracker facetracker(11, FaceTracker::FaceShape);
     //FaceTracker facetracker(64, FaceTracker::NoAlign);
     facetracker.setFaceClassifier(&facedet);
     facetracker.setEyeClassifier(&eyedet);
@@ -90,13 +92,12 @@ int main(int argc, char *argv[])
     }
 
     // Dlib's stuff
-    dlib::frontal_face_detector dlibfacedet = dlib::get_frontal_face_detector();
-    dlib::shape_predictor       dlibshapepredictor;
+    dlib::shape_predictor dlibshapepredictor;
     try {
 #ifdef DLIB_FACE_SHAPE_FILENAME
     dlib::deserialize(DLIB_FACE_SHAPE_FILENAME) >> dlibshapepredictor;
 #else
-    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> dlibshapepredictor;
+    dlib::deserialize("shape_predictor_5_face_landmarks.dat") >> dlibshapepredictor;
 #endif
     }
     catch(...) {
@@ -319,6 +320,7 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
 {
     std::vector <cv::Point> points;
     for (int i = start; i <= end; ++i) {
+        cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
         points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
     }
     cv::polylines(img, points, isClosed, cv::Scalar(0,255,0), 1, CV_AA);
@@ -326,22 +328,28 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
 }
 
 void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d)
-{
+{   
     DLIB_CASSERT (
-         d.num_parts() == 68,
+         d.num_parts() == 68 || d.num_parts() == 5,
          "\n\t Invalid inputs were given to this function. "
          << "\n\t d.num_parts():  " << d.num_parts()
      );
 
-    draw_polyline(img, d, 0, 16);           // Jaw line
-    draw_polyline(img, d, 17, 21);          // Left eyebrow
-    draw_polyline(img, d, 22, 26);          // Right eyebrow
-    draw_polyline(img, d, 27, 30);          // Nose bridge
-    draw_polyline(img, d, 30, 35, true);    // Lower nose
-    draw_polyline(img, d, 36, 41, true);    // Left eye
-    draw_polyline(img, d, 42, 47, true);    // Right Eye
-    draw_polyline(img, d, 48, 59, true);    // Outer lip
-    draw_polyline(img, d, 60, 67, true);    // Inner lip
+    if(d.num_parts() == 68) {
+        draw_polyline(img, d, 0, 16);           // Jaw line
+        draw_polyline(img, d, 17, 21);          // Left eyebrow
+        draw_polyline(img, d, 22, 26);          // Right eyebrow
+        draw_polyline(img, d, 27, 30);          // Nose bridge
+        draw_polyline(img, d, 30, 35, true);    // Lower nose
+        draw_polyline(img, d, 36, 41, true);    // Left eye
+        draw_polyline(img, d, 42, 47, true);    // Right Eye
+        draw_polyline(img, d, 48, 59, true);    // Outer lip
+        draw_polyline(img, d, 60, 67, true);    // Inner lip
+    } else if(d.num_parts() == 5) {
+        draw_polyline(img, d, 0, 1);    // Left eye
+        draw_polyline(img, d, 2, 3);    // Right Eye
+        draw_polyline(img, d, 4, 4);    // Lower nose
+    }
 
 }
 

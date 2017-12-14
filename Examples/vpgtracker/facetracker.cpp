@@ -137,19 +137,28 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
             case FaceShape: {
                 dlib::cv_image<dlib::rgb_pixel> _dlibfaceimg(faceImage);
                 faceshape = (*pt_dlibfaceshapepredictor)(_dlibfaceimg, dlib::rectangle(_dlibfaceimg.nc(),_dlibfaceimg.nr()));
-                DLIB_CASSERT (faceshape.num_parts() == 68, "\n\t Invalid inputs were given to this function. " << "\n\t d.num_parts():  " << faceshape.num_parts());
+                DLIB_CASSERT (faceshape.num_parts() == 68 || faceshape.num_parts() == 5, "\n\t Invalid inputs were given to this function. " << "\n\t d.num_parts():  " << faceshape.num_parts());
                 cv::Point2f _lefteyecenter;
                 cv::Point2f _righteyecenter;
-                for(size_t i = 0; i < 6; ++i) {
-                    _lefteyecenter += cv::Point2f(faceshape.part(i+36).x(),faceshape.part(i+36).y());
-                    _righteyecenter += cv::Point2f(faceshape.part(i+42).x(),faceshape.part(i+42).y());
+                if(faceshape.num_parts() == 68) {
+                    for(size_t i = 0; i < 6; ++i) {
+                        _lefteyecenter += cv::Point2f(faceshape.part(i+36).x(),faceshape.part(i+36).y());
+                        _righteyecenter += cv::Point2f(faceshape.part(i+42).x(),faceshape.part(i+42).y());
+                    }
+                    _lefteyecenter /= 6;
+                    _righteyecenter /= 6;
+                } else if(faceshape.num_parts() == 5) {
+                    for(size_t i = 0; i < 2; ++i) {
+                        _lefteyecenter += cv::Point2f(faceshape.part(i).x(),faceshape.part(i).y());
+                        _righteyecenter += cv::Point2f(faceshape.part(i+2).x(),faceshape.part(i+2).y());
+                    }
+                    _lefteyecenter /= 2;
+                    _righteyecenter /= 2;
                 }
-                _lefteyecenter /= 6;
-                _righteyecenter /= 6;
                 cv::Point2f peyes = _righteyecenter - _lefteyecenter;
                 m_angle += 45.0 * std::atan(peyes.y / peyes.x) / PI_VALUE; // 180.0 produces angle jitter, and 90.0 looks more stable
                 for(size_t i = 0; i < faceshape.num_parts(); ++i) {
-                    faceshape.part(i) -= dlib::point(_dlibfaceimg.nc()/2.0f,_dlibfaceimg.nr()/2.0);
+                    faceshape.part(i) -= dlib::point(_dlibfaceimg.nc()/2.0f,_dlibfaceimg.nr()/2.0f);
                 }
             }
             break;
