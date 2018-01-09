@@ -54,17 +54,25 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
             cv::resize(rgbImage, img, cv::Size(640, 360), 0.0, 0.0, CV_INTER_AREA);
             scaleX = (double)rgbImage.cols / 640.0;
             scaleY = (double)rgbImage.rows / 360.0;
-        } else {
+        } else if ( ((float)rgbImage.cols/rgbImage.rows) > 1.0) {
             cv::resize(rgbImage, img, cv::Size(640, 480), 0.0, 0.0, CV_INTER_AREA);
             scaleX = (double)rgbImage.cols / 640.0;
             scaleY = (double)rgbImage.rows / 480.0;
+        } else if ( ((float)rgbImage.rows/rgbImage.cols) > 14.0/9.0) {
+            cv::resize(rgbImage, img, cv::Size(360, 640), 0.0, 0.0, CV_INTER_AREA);
+            scaleX = (double)rgbImage.cols / 360.0;
+            scaleY = (double)rgbImage.rows / 640.0;
+        } else {
+            cv::resize(rgbImage, img, cv::Size(480, 640), 0.0, 0.0, CV_INTER_AREA);
+            scaleX = (double)rgbImage.cols / 480.0;
+            scaleY = (double)rgbImage.rows / 640.0;
         }
     } else {
         img = rgbImage;
     }
 
     std::vector<cv::Rect> faces;
-    m_classifier.detectMultiScale(img, faces, 1.15, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
+    m_classifier.detectMultiScale(img, faces, 1.2, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
 
     if(faces.size() > 0) {
         __updateRects(faces[0]);
