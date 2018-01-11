@@ -63,7 +63,7 @@ void PeakDetector::update(double value, double time)
         lastfrontposition = __loop(curposforsignal - 2);
     }
 
-    curposforsignal = (++curposforsignal) % m_signallength;
+    curposforsignal = (curposforsignal + 1) % m_signallength;
 }
 
 const double *PeakDetector::getIntervalsVector() const
@@ -160,7 +160,7 @@ void PeakDetector::__updateInterval(double _duration)
     } else {
         v_Intervals[curposforinterval] = _duration;
         //std::cout << "duration " << _duration << "(m " << _mean << ", s " << _sko << ")"<<  std::endl;
-        curposforinterval = (++curposforinterval) % m_intervalslength;
+        curposforinterval = (curposforinterval + 1) % m_intervalslength;
     }    
 }
 

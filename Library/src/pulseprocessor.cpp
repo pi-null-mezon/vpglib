@@ -116,7 +116,7 @@ void PulseProcessor::update(double value, double time)
 	if(pt_peakdetector != 0)
         pt_peakdetector->update(v_Y[curpos], v_time[curpos]);
 
-    curpos = (++curpos) % m_length;
+    curpos = (curpos + 1) % m_length;
 }
 
 double PulseProcessor::computeFrequency()

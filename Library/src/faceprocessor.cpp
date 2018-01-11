@@ -238,7 +238,7 @@ void FaceProcessor::__updateRects(const cv::Rect &rect)
 {
     if(f_firstface == false){
         v_rects[m_pos] = rect;
-        m_pos = (++m_pos) % FACE_PROCESSOR_LENGTH;
+        m_pos = (m_pos + 1) % FACE_PROCESSOR_LENGTH;
     } else {
         for(int i = 0; i < FACE_PROCESSOR_LENGTH; i++)
             v_rects[i] = rect;
