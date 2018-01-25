@@ -19,13 +19,13 @@
 #define FACEPROCESSOR_H
 //-------------------------------------------------------
 #ifdef DLL_BUILD_SETUP
-    #ifdef Q_OS_LINUX
+    #ifdef TARGET_OS_LINUX
         #define DLLSPEC __attribute__((visibility("default")))
     #else
         #define DLLSPEC __declspec(dllexport)
     #endif
 #else
-    #ifdef Q_OS_LINUX
+    #ifdef TARGET_OS_LINUX
         #define DLLSPEC
     #else
         #define DLLSPEC __declspec(dllimport)
@@ -95,7 +95,7 @@ public:
      */
     bool loadClassifier(const std::string &filename);
     /**
-     * @brief measureFramePeriod should be used to measure frame period for the target video source
+     * @brief measureFramePeriod should be used to measure actual frame period (i.e. real fps) of video
      * @param _vcptr - pointe rto the target video capture (that will be used to VPG extraction)
      * @return average frame time in ms (use this value to instantiate PulseProcessor instance then)
      * @note VideoCapture object should be opened else -1.0 will be returned

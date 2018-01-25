@@ -19,13 +19,13 @@
 #define PEAKDETECTOR_H
 //-------------------------------------------------------
 #ifdef DLL_BUILD_SETUP
-    #ifdef Q_OS_LINUX
+    #ifdef TARGET_OS_LINUX
         #define DLLSPEC __attribute__((visibility("default")))
     #else
         #define DLLSPEC __declspec(dllexport)
     #endif
 #else
-    #ifdef Q_OS_LINUX
+    #ifdef TARGET_OS_LINUX
         #define DLLSPEC
     #else
         #define DLLSPEC __declspec(dllimport)

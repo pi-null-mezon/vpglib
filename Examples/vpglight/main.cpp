@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     vpg::FaceProcessor faceproc(std::string("haarcascade_frontalface_alt2.xml"));
     #endif
 
-    std::cout << "Measure frame period... " << std::endl;
+    std::cout << "Measuring frame period. PLease wait..." << std::endl;
     double framePeriod = faceproc.measureFramePeriod(&capture); // milliseconds
     std::cout << framePeriod << " ms" << std::endl;
     vpg::PulseProcessor pulseproc(framePeriod);

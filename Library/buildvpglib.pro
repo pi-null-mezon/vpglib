@@ -41,8 +41,11 @@ win32:contains(QMAKE_TARGET.arch, x86_64){
 }
 
 linux {
-    DEFINES += Q_OS_LINUX
-    ARCHITECTURE  = arm32
+    DEFINES += TARGET_OS_LINUX
+    ARCHITECTURE = linux
+#linux-g++:QMAKE_TARGET.arch = $$QMAKE_HOST.arch
+#linux-g++-32:QMAKE_TARGET.arch = x86
+#linux-g++-64:QMAKE_TARGET.arch = x86_64
     COMPILER = gcc
 }
 

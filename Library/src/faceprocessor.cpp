@@ -203,9 +203,8 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
     //Check if video source is opened
     if(_vcptr->isOpened() == false)
         return -1.0;
-
-    if(_vcptr->get(cv::CAP_PROP_POS_MSEC) == -1) { // if the video source is a video device
-
+    // We need to chek if videosource represents videofile or videocapturing device
+    if(_vcptr->get(cv::CAP_PROP_FRAME_COUNT) <= 0) { // video source is a video device
         int _iterations = 35;
         double _timeaccum = 0.0, _time = 0.0, _value = 0.0;
         cv::Mat _frame;
@@ -219,7 +218,7 @@ double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
             }
         }
         return _timeaccum / (_iterations - 5);
-    } else { // if the video source is a video file
+    } else { // video source is a video file
         return 1000.0 / _vcptr->get(cv::CAP_PROP_FPS);
     }
 }
