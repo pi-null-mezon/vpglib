@@ -30,8 +30,9 @@
 
 # Paths
 *.pro.user*
-/Install
 /build
+/Install
 /Examples/build
 /Library/bin
+**/build
 
