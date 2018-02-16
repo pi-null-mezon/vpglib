@@ -14,8 +14,8 @@
 #define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
 #define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
 
-#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_5_face_landmarks.dat"
-//#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
+//#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_5_face_landmarks.dat"
+#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
 
 
 template <typename T>
@@ -26,6 +26,10 @@ void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d);
 void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const double *> _data, const int _datalength, double _ymax, double _ymin, const std::vector<cv::Scalar> &_colors);
 
 void selectRegionByMouse(int event, int x, int y, int flags, void* userdata);
+
+void loadSelection(void* userdata);
+
+void saveSelection(void* userdata);
 
 const cv::String keys = "{help h          |                 | - print help}"
                         "{device d        |       0         | - video capture device enumerator}"
@@ -47,7 +51,7 @@ int main(int argc, char *argv[])
     std::ofstream ofs;
     ofs.open(cmdargsparser.get<std::string>("outputfilename"));
     if(ofs.is_open() == false) {
-        std::cout << "Can not open file '" << cmdargsparser.get<std::string>("outputfilename") << "' for write! Abort...";
+        std::cout << "Can not open file '" << cmdargsparser.get<std::string>("outputfilename") << "' for write! Abort..." << std::endl;
         return -1;
     }
 
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
 #endif
     cv::CascadeClassifier facedet(facecascadefilename);
     if(facedet.empty()) {
-        std::cout << "Could not load face detector resources! Abort...\n";
+        std::cout << "Could not load face detector resources! Abort..." << std::endl;
         return -1;
     }
     cv::String eyecascadefilename;
@@ -72,7 +76,7 @@ int main(int argc, char *argv[])
 #endif
     cv::CascadeClassifier eyedet(eyecascadefilename);
     if(eyedet.empty()) {
-        std::cout << "Could not load eye detector resources! Abort...\n";
+        std::cout << "Could not load eye detector resources! Abort..." << std::endl;
         return -1;
     }
     FaceTracker facetracker(11, FaceTracker::FaceShape);
@@ -83,7 +87,7 @@ int main(int argc, char *argv[])
     // Video capture
     cv::VideoCapture videocapture;
     if(videocapture.open(cmdargsparser.get<int>("device")) == false) {       
-        std::cerr << "Can not open video device # " << cmdargsparser.get<int>("device") << "! Abort...";
+        std::cerr << "Can not open video device # " << cmdargsparser.get<int>("device") << "! Abort..." << std::endl;
         return -1;
     } else {
         videocapture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
@@ -101,7 +105,7 @@ int main(int argc, char *argv[])
 #endif
     }
     catch(...) {
-        std::cerr << "Can not load dlib's resources!";
+        std::cerr << "Can not load dlib's resources!" << std::endl;
     }
     facetracker.setFaceShapeDetector(&dlibshapepredictor);
 
@@ -113,7 +117,7 @@ int main(int argc, char *argv[])
     #endif
     vpg::FaceProcessor faceproc(facecascadefilename);
     if(faceproc.empty()) {
-        std::cout << "Could not load face detector resources! Abort...\n";
+        std::cout << "Could not load face detector resources! Abort..." << std::endl;
         return -1;
     }
     std::cout << "Calibrating frame period. Please wait..." << std::endl;
@@ -174,7 +178,7 @@ int main(int argc, char *argv[])
     std::pair<cv::Rect,cv::Rect> _selectionpair = std::make_pair(cv::Rect(), cv::Rect());
 
     // Prepare output -------------------------------------------------------------------------------------------------------------
-    std::cout << "This session results will be written to '" << cmdargsparser.get<std::string>("outputfilename") << "'";
+    std::cout << "Measurements will be written to '" << cmdargsparser.get<std::string>("outputfilename") << "'" << std::endl;
     std::time_t _timet = std::time(0);
     struct std::tm * now = localtime( &_timet );
     ofs << "This file has been created by " << APP_NAME << " v." << APP_VERSION << std::endl;
@@ -189,11 +193,12 @@ int main(int argc, char *argv[])
         << "R_C1,\tG_C1,\tB_C1,\tR_C2,\tG_C2,\tB_C2,\tVPG_C1,\tVPG_C2";
     for(unsigned int k = 0; k < 68; ++k)
         ofs << ",\tP[" << k << "].X,\tP[" << k << "].Y";
-    ofs << std::fixed << std::endl;
+    ofs << std::fixed << std::setprecision(4) << std::endl;
    // -----------------------------------------------------------------------------------------------------------------------------
 
-    std::cout << "\nYou can select regions you want to process on the window 'Select regions'. Use your mouse...";
+    std::cout << "You can select regions you want to process on the window 'Select regions'. Use your mouse..." << std::endl;
     cv::setMouseCallback("Select regions", selectRegionByMouse, &_selectionpair);
+    loadSelection(&_selectionpair);
     while(videocapture.read(frame)) {
 
         faceregion = facetracker.getResizedFaceImage(frame,targetfacesize);
@@ -320,11 +325,10 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
 {
     std::vector <cv::Point> points;
     for (int i = start; i <= end; ++i) {
-        cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
+        //cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
         points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
     }
     cv::polylines(img, points, isClosed, cv::Scalar(0,255,0), 1, CV_AA);
-
 }
 
 void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d)
@@ -392,6 +396,26 @@ void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const 
     }
 }
 
+void loadSelection(void* userdata)
+{
+    cv::FileStorage _cvfilestorage;
+    if(_cvfilestorage.open(cv::String(APP_NAME) + cv::String(".yml"), cv::FileStorage::READ)) {
+        std::pair<cv::Rect,cv::Rect> *_selectionrects = reinterpret_cast<std::pair<cv::Rect,cv::Rect>*>(userdata);
+        _cvfilestorage["rect_1"] >> _selectionrects->first;
+        _cvfilestorage["rect_2"] >> _selectionrects->second;
+    }
+    _cvfilestorage.release();
+}
+
+void saveSelection(void* userdata)
+{
+    cv::FileStorage _cvfilestorage(cv::String(APP_NAME) + cv::String(".yml"), cv::FileStorage::WRITE);
+    std::pair<cv::Rect,cv::Rect> *_selectionrects = reinterpret_cast<std::pair<cv::Rect,cv::Rect>*>(userdata);
+    _cvfilestorage << "rect_1" << _selectionrects->first;
+    _cvfilestorage << "rect_2" << _selectionrects->second;
+    _cvfilestorage.release();
+}
+
 void selectRegionByMouse(int event, int x, int y, int flags, void* userdata)
 {
     static int leftbtnX0 = 0, leftbtnY0 = 0, leftbtnPressed = 0,
@@ -400,10 +424,11 @@ void selectRegionByMouse(int event, int x, int y, int flags, void* userdata)
         case cv::EVENT_LBUTTONDOWN:
             leftbtnX0 = x;
             leftbtnY0 = y;
-            leftbtnPressed= 1;
+            leftbtnPressed = 1;
             break;
         case cv::EVENT_LBUTTONUP:
-            leftbtnPressed= 0;
+            leftbtnPressed = 0;
+            saveSelection(userdata);
             break;
         case cv::EVENT_MOUSEMOVE:
             if(leftbtnPressed) {
@@ -439,7 +464,7 @@ void selectRegionByMouse(int event, int x, int y, int flags, void* userdata)
                     _selection.y = rightbtnY0;
                     _selection.height = y-rightbtnY0;
                 }
-            }
+            }            
             break;
     case cv::EVENT_RBUTTONDOWN:
         rightbtnX0 = x;
@@ -448,6 +473,7 @@ void selectRegionByMouse(int event, int x, int y, int flags, void* userdata)
         break;
     case cv::EVENT_RBUTTONUP:
         rightbtnPressed= 0;
+        saveSelection(userdata);
         break;
     }
 }

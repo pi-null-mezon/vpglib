@@ -416,7 +416,7 @@ void FaceTracker::__updateHistory(const cv::Rect &rect)
         beginFlag = false;
     } else {                                       
         v_rectHistory[m_pos] = rect;
-        m_pos = (++m_pos) % m_historyLength;        
+        m_pos = (m_pos+1) % m_historyLength;
     }
     m_framesFaceFound++;
 }
@@ -460,7 +460,7 @@ bool FaceTracker::updateMetaData(int _id, double _confidence, const cv::String &
         setMetaData(_id,_confidence,_info);
         _hasbeenupdated = true;
     }
-    p = (++p) % v_metaID.size();
+    p = (p+1) % v_metaID.size();
     return _hasbeenupdated;
 }
 
