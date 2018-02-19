@@ -38,3 +38,5 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui
+
+RC_ICONS += $${PWD}/Resources/$${TARGET}.ico

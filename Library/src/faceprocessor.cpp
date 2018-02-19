@@ -176,6 +176,87 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, dou
     }
 }
 
+void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double *v_resGreen, double *v_resBlue, double &resT)
+{
+    cv::Rect faceRect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
+
+    int X = faceRect.x;
+    int Y = faceRect.y;
+    int W = faceRect.width;
+    int H = faceRect.height;
+    int dY = H/30;
+    // Clockwise, starts from left part of forehead
+    unsigned long b[] = {0, 0, 0, 0};
+    unsigned long g[] = {0, 0, 0, 0};
+    unsigned long r[] = {0, 0, 0, 0};
+    unsigned long a[] = {0, 0, 0, 0};
+
+    if(faceRect.area() > 0) {
+        cv::Mat region = cv::Mat(rgbImage, faceRect).clone();
+        cv::blur(region,region, m_blurSize);
+        m_ellRect = cv::Rect(X, Y - 6 * dY, W, H + 6 * dY);
+        X = m_ellRect.x;
+        W = m_ellRect.width;
+        unsigned char *p;
+        unsigned char tG = 0, tR = 0, tB = 0;
+        for(int j = 0; j < Y + H; j++) {
+            p = region.ptr(j); //takes pointer to beginning of data on row
+            for(int i = X; i < X + W; i++) {
+                tB = p[3*i];
+                tG = p[3*i+1];
+                tR = p[3*i+2];
+                if(__insideEllipse(i, j)) {
+                    if( j < Y + 2* H / 7 ) {
+                        if(i < X + W / 2) {
+                            b[3] += tB;
+                            g[3] += tG;
+                            r[3] += tR;
+                            a[3]++;
+                            p[3*i] %= 32;
+                            p[3*i+2] %= 32;
+                        } else if (i > X + W / 2) {
+                            b[0] += tB;
+                            g[0] += tG;
+                            r[0] += tR;;
+                            a[0]++;
+                            p[3*i] %= 32;
+                        }
+                    } else if( (j > Y + 3*H / 7) && (j < Y + 5*H / 7)) {
+                        if( i < X + W / 2) {
+                            b[2] += tB;
+                            g[2] += tG;
+                            r[2] += tR;
+                            a[2]++;
+                            p[3*i+1] %= 32;
+                        } else if (i > X + W / 2) {
+                            b[1] += tB;
+                            g[1] += tG;
+                            r[1] += tR;
+                            a[1]++;
+                            p[3*i+2] %= 32;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    resT = ((double)cv::getTickCount() - (double)m_markTime)*1000.0 / cv::getTickFrequency();
+    m_markTime = cv::getTickCount();
+    for(int i = 0; i < 4; i++) {
+        if(a[i] > 1000) {
+            v_resBlue[i] = (double)b[i] / a[i];
+            v_resGreen[i] = (double)g[i] / a[i];
+            v_resRed[i] = (double)r[i] / a[i];
+        } else {
+            v_resBlue[i] = 0.0;
+            v_resGreen[i] = 0.0;
+            v_resRed[i] = 0.0;
+        }
+    }
+}
+
+
 cv::Rect FaceProcessor::__getMeanRect() const
 {
     double x = 0.0, y = 0.0, w = 0.0, h = 0.0;

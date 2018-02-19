@@ -74,15 +74,27 @@ public:
      */
     void enrollImage(const cv::Mat &rgbImage, double &resV, double &resT);
     /**
-     * Enroll image's roirect to produce PPG-signal count
+     * Enroll image's roi rect to produce PPG-signal count
      * @param rgbImage - input image, BGR format only
      * @param resRed - where result count should be written (red channel)
      * @param resGreen - where result count should be written (green channel)
      * @param resBlue - where result count should be written (blue channel)
      * @param resT - where processing time should be written
-     * @note  no face detection will be performed, function waits that you already detect face somehow
+     * @note  no face detection will be performed!
      */
     void enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect=cv::Rect());
+    /**
+     * Extract average colorsd from 4-part face partition
+     * Pratition is clockwise, starts from left part of the forehead: |3|0|
+     *                                                                |2|1|
+     * @param rgbImage - input image of the face, BGR format only
+     * @param v_resRed - pointer to 4 element vector for average red values
+     * @param v_resGreen - pointer to 4 element vector for average red values
+     * @param v_resBlue - pointer to 4 element vector for average red values
+     * @param resT - where processing time should be written
+     * @note  no face detection will be performed! It is your responsibility to provide face image
+     */
+    void enrollFace(const cv::Mat &rgbImage, double *v_resRed, double *v_resGreen, double *v_resBlue, double &resT);
     /**
      * Get cv::Rect that bounds face on image
      * @return coordinates of face on image in cv::Rect form

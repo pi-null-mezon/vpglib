@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle(QString("%1 v.%2").arg(APP_NAME,APP_VERSION));
 
     __loadSessionSettings();
     __updateParticipantsList();
@@ -93,10 +94,12 @@ void MainWindow::__saveSessionSetting()
 
 void MainWindow::__updateParticipantsList()
 {
-    QDir _dir(ui->researchesdirLE->text());
-    QStringList _subdirname = _dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-    ui->participantidCB->clear();
-    ui->participantidCB->addItems(_subdirname);
+    if(ui->researchesdirLE->text().isEmpty() == false) {
+        QDir _dir(ui->researchesdirLE->text());
+        QStringList _subdirname = _dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        ui->participantidCB->clear();
+        ui->participantidCB->addItems(_subdirname);
+    }
 }
 
 void MainWindow::on_participantidCB_activated(const QString &arg1)
@@ -111,32 +114,40 @@ void MainWindow::on_participantidCB_activated(const QString &arg1)
 
 void MainWindow::on_startB_clicked()
 {
-    QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
-    QDir _dir(_targetdirname);
-    if(_dir.exists() == false) {
-        ui->textEdit->setText(tr("Не могу найти испытуемого с идентификатором: %1").arg(ui->participantidCB->currentText()));
-        return;
+    if((ui->researchesdirLE->text().isEmpty() == false) && (ui->participantidCB->currentText().isEmpty() == false)) {
+        QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
+        QDir _dir(_targetdirname);
+        if(_dir.exists() == false) {
+            ui->textEdit->setText(tr("Не могу найти испытуемого с идентификатором: %1").arg(ui->participantidCB->currentText()));
+            return;
+        }
+
+        if(proc.state() == QProcess::NotRunning) {
+            QStringList _args = procargs;
+            _args << QString("--outputfilename=%1/%2.csv").arg(_targetdirname,QDateTime::currentDateTime().toString("ddMMyyyy_hhmmss"));
+            qInfo("%s",procname.toUtf8().constData());
+            proc.setProgram(qApp->applicationDirPath().append("/%1").arg(procname));
+            proc.setArguments(_args);
+            ui->textEdit->clear();
+            proc.start();
+        } else {
+            ui->textEdit->setText(tr("Процесс уже запущен!"));
+        }
+
+    } else {
+        ui->textEdit->setText(tr("Не определён путь для сохранения измерений! Заполните поля, расположенные выше!"));
     }
-
-    QStringList _args = procargs;
-    _args << QString("--outputfilename=%1/%2").arg(_targetdirname,QDateTime::currentDateTime().toString("ddMMyyyy hh-mm-ss.csv"));
-
-
-    qInfo("%s",procname.toUtf8().constData());
-    proc.setProgram(qApp->applicationDirPath().append("/%1").arg(procname));
-    proc.setArguments(_args);
-    ui->textEdit->clear();
-    proc.start();
 }
 
 void MainWindow::readProcess()
 {
-    ui->textEdit->append(proc.readAll());
+    ui->textEdit->append(QString::fromLocal8Bit(proc.readAll()));
 }
 
 void MainWindow::readError(QProcess::ProcessError _error)
 {
-    ui->textEdit->setText(tr("Произошла ошибка при запуске процесса! Код ошибки: %1").arg(QString::number(_error)));
+    Q_UNUSED(_error);
+    //ui->textEdit->setText(tr("Произошла ошибка при запуске процесса! Код ошибки: %1").arg(QString::number(_error)));
 }
 
 void MainWindow::on_stopB_clicked()

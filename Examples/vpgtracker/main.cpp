@@ -11,11 +11,11 @@
 
 // Comment to make deployment build
 
-#define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
-#define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
+//#define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
+//#define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
 
 //#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_5_face_landmarks.dat"
-#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
+//#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
 
 
 template <typename T>
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 #ifdef DLIB_FACE_SHAPE_FILENAME
     dlib::deserialize(DLIB_FACE_SHAPE_FILENAME) >> dlibshapepredictor;
 #else
-    dlib::deserialize("shape_predictor_5_face_landmarks.dat") >> dlibshapepredictor;
+    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> dlibshapepredictor;
 #endif
     }
     catch(...) {
@@ -166,8 +166,10 @@ int main(int argc, char *argv[])
     // Create local variables to store frame and processing values
     double _hrupdateIntervalms = 0.0;
     double _r = 0.0, _g = 0.0, _b = 0.0, t = 0.0;
+    double _dummytime = 0.0; // it is dummy variable, it is needed because we do not want to modify frame time on the second frame processing call
     std::pair<unsigned int, unsigned int> _hr(pulseprocfirst.getFrequency(),pulseprocsecond.getFrequency());
     std::pair<double, double> _snr(0.0,0.0);
+    double _avgBlue[] = {0,0,0,0}, _avgGreen[] = {0,0,0,0}, _avgRed[] = {0,0,0,0};
 
     cv::Mat frame, faceregion;
     cv::Size targetfacesize(cmdargsparser.get<int>("facesize"), cmdargsparser.get<int>("facesize") * 1.33);
@@ -189,11 +191,14 @@ int main(int argc, char *argv[])
         << std::setw(2) << std::setfill('0') << (now->tm_hour) << ":"
         << std::setw(2) << std::setfill('0') << (now->tm_min) << ":"
         << std::setw(2) << std::setfill('0') << now->tm_sec << std::endl
-        << "Measurement interval " << framePeriod << "[ms]" << std::endl
-        << "R_C1,\tG_C1,\tB_C1,\tR_C2,\tG_C2,\tB_C2,\tVPG_C1,\tVPG_C2";
+        << "Measurement time interval " << framePeriod << "[ms]" << std::endl
+        << "Face scheme: |3|0|" << std::endl
+        << "             |2|1|" << std::endl
+        << "r[0],\tg[0],\tb[0],\tr[1],\tg[1],\tb[1],\tr[2],\tg[2],\tb[2],\tr[3],\tg[3],\tb[3]"
+        << ",\tR_C1,\tG_C1,\tB_C1,\tR_C2,\tG_C2,\tB_C2,\tVPG_C1,\tVPG_C2";
     for(unsigned int k = 0; k < 68; ++k)
         ofs << ",\tP[" << k << "].X,\tP[" << k << "].Y";
-    ofs << std::fixed << std::setprecision(4) << std::endl;
+    ofs << std::fixed << std::setprecision(3) << std::endl;
    // -----------------------------------------------------------------------------------------------------------------------------
 
     std::cout << "You can select regions you want to process on the window 'Select regions'. Use your mouse..." << std::endl;
@@ -203,7 +208,13 @@ int main(int argc, char *argv[])
 
         faceregion = facetracker.getResizedFaceImage(frame,targetfacesize);
         if(!faceregion.empty()) {
-           faceproc.enrollImagePart(faceregion,_r,_g,_b,t,_selectionpair.first);
+           faceproc.enrollFace(faceregion,_avgRed,_avgGreen,_avgBlue,t);
+           for(unsigned int _part = 0; _part < 4; ++_part) {
+               ofs << _avgRed[_part] << ",\t" << _avgGreen[_part] << ",\t" << _avgBlue[_part] << ",\t";
+           }
+
+           faceproc.enrollImagePart(faceregion,_r,_g,_b,_dummytime,_selectionpair.first);
+
            ofs << _r << ",\t" << _g << ",\t" << _b << ",\t";
            switch(_colorset) {
                 case 0:
@@ -216,7 +227,6 @@ int main(int argc, char *argv[])
                    pulseprocfirst.update(_b,t);
                    break;
            }
-           static double _dummytime = 0.0; // it is dummy variable, it is needed because we do not want to modify frame time on the second frame processing call
            faceproc.enrollImagePart(faceregion,_r,_g,_b,_dummytime,_selectionpair.second);
            ofs << _r << ",\t" << _g << ",\t" << _b << ",\t";
            switch(_colorset) {
@@ -256,7 +266,7 @@ int main(int argc, char *argv[])
            _faceRrect.points(_vert);
            for(unsigned char i = 0; i < 4; ++i) {
                cv::line(frame,_vert[i], _vert[(i+1)%4],cv::Scalar(0,0,255),1,CV_AA);
-           }*/           
+           }*/
            if(facetracker.getFaceAlignMethod() == FaceTracker::FaceShape) {
                ofs << pulseprocfirst.getSignalSampleValue() << ",\t" << pulseprocsecond.getSignalSampleValue();
                dlib::full_object_detection _faceshape = facetracker.getFaceShape();

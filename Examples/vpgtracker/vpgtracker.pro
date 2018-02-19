@@ -3,7 +3,7 @@ CONFIG += c++11 console
 CONFIG -= app_bundle
 
 TARGET = vpgtracker
-VERSION = 1.0.0.2
+VERSION = 1.0.1.0
 
 DEFINES += APP_NAME=\\\"$${TARGET}\\\" \
            APP_VERSION=\\\"$${VERSION}\\\" \
