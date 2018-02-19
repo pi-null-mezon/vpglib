@@ -11,11 +11,11 @@
 
 // Comment to make deployment build
 
-//#define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
-//#define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
+#define FACE_CASCADE_FILENAME "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml"
+#define EYE_CASCADE_FILENAME  "C:/Programming/3rdPArties/opencv330/build/etc/haarcascades/haarcascade_eye.xml"
 
 //#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_5_face_landmarks.dat"
-//#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
+#define DLIB_FACE_SHAPE_FILENAME "C:/Programming/3rdParties/Dlib/build_vc14x64/etc/data/shape_predictor_68_face_landmarks.dat"
 
 
 template <typename T>

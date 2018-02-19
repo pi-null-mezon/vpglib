@@ -28,8 +28,13 @@
 *.app
 *.pdb
 
-# Paths
+# Project files
+*.pdb
+*.ilk
+*.pro
 *.pro.user*
+
+#Path
 /build
 /Install
 /Examples/build
