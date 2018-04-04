@@ -34,10 +34,12 @@
 *.pro
 *.pro.user*
 
+Table data
+*.csv
+
 #Path
-/build
-/Install
-/Examples/build
-/Library/bin
+**/Install
+**/bin
 **/build
+**/Build
 
