@@ -4,10 +4,10 @@
 #include <QDialog>
 #include <QBoxLayout>
 #include <QPushButton>
-#include <QDateTime>
 #include <QFileDialog>
 #include <QSettings>
 #include <QLabel>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if(proc.state() == QProcess::Running)
+        proc.kill();
+
     delete ui;
 }
 
@@ -65,8 +68,9 @@ void MainWindow::on_researchdirB_clicked()
 {
     QString _dirname = QFileDialog::getExistingDirectory(this, APP_NAME, "");
     if(!_dirname.isEmpty()) {
-        ui->researchesdirLE->setText(_dirname);
+        ui->researchesdirLE->setText(_dirname);       
         __updateParticipantsList();
+        ui->textEdit->clear();
     }
 }
 
@@ -102,6 +106,18 @@ void MainWindow::__updateParticipantsList()
     }
 }
 
+void MainWindow::startArrowsProcess()
+{
+    QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
+    QStringList _args;
+    _args << QString("-i%1/Task.arrows").arg(qApp->applicationDirPath())
+          << QString("-o%1/ar_%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"))
+          << "-m";
+    if(QProcess::startDetached(qApp->applicationDirPath().append("/Arrows.exe"),_args) == false) {
+        ui->textEdit->append(tr("Не удалось запустить процесс Arrows.exe"));
+    }
+}
+
 void MainWindow::on_participantidCB_activated(const QString &arg1)
 {
     QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(arg1);
@@ -123,19 +139,22 @@ void MainWindow::on_startB_clicked()
         }
 
         if(proc.state() == QProcess::NotRunning) {
+            // VPG process
             QStringList _args = procargs;
-            _args << QString("--outputfilename=%1/%2.csv").arg(_targetdirname,QDateTime::currentDateTime().toString("ddMMyyyy_hhmmss"));
-            qInfo("%s",procname.toUtf8().constData());
+            _startdt = QDateTime::currentDateTime();
+            _args << QString("--outputfilename=%1/%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
             proc.setProgram(qApp->applicationDirPath().append("/%1").arg(procname));
-            proc.setArguments(_args);
+            proc.setArguments(_args);           
+
             ui->textEdit->clear();
             proc.start();
+            QTimer::singleShot(5000,this,SLOT(startArrowsProcess()));
         } else {
             ui->textEdit->setText(tr("Процесс уже запущен!"));
         }
 
     } else {
-        ui->textEdit->setText(tr("Не определён путь для сохранения измерений! Заполните поля, расположенные выше!"));
+        ui->textEdit->setText(tr("Не определён путь для сохранения измерений! Заполните поля расположенные выше!"));
     }
 }
 
@@ -152,7 +171,6 @@ void MainWindow::readError(QProcess::ProcessError _error)
 
 void MainWindow::on_stopB_clicked()
 {
-    if(proc.state() == QProcess::Running) {
-        proc.kill();
-    }
+    if(proc.state() == QProcess::Running)
+        proc.kill();    
 }

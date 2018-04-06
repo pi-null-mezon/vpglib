@@ -1,0 +1,14 @@
+* This file contains task for the Arrows app
+* Color name is represented here in hexadecimal number #AARRGGBB
+* Arrow direction set: Up, Down, Left, Right
+* -------------------------------------------------
+*	BackgroundColor,	ArrowColor,	ArrowDirection
+* -------------------------------------------------
+	#FFAA7777,			#FFFF00FF,	Up
+	#FF7777EE,			#FF00FFFF,	Right
+	#FF77FF77,			#FFFFFF00,	Down
+	#00777777,			#FFFFFFFF,	Left
+	#FF333333,			#FF999999,	Up
+	#FF333333,			#FF999999,	Right
+	#FF333333,			#FF999999,	Down
+	#FF333333,			#FF999999,	Left	

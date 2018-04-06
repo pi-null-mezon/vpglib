@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QProcess>
+#include <QDateTime>
 
 namespace Ui {
 class MainWindow;
@@ -25,6 +26,7 @@ private slots:
     void readProcess();
     void readError(QProcess::ProcessError _error);
     void on_stopB_clicked();
+    void startArrowsProcess();
 
 protected:
     void closeEvent(QCloseEvent *_event);
@@ -32,12 +34,13 @@ protected:
 private:
     void __loadSessionSettings();
     void __saveSessionSetting();
-    void __updateParticipantsList();
+    void __updateParticipantsList();    
 
     QProcess proc;
 
     QString procname;
     QStringList procargs;
+    QDateTime _startdt;
 
     Ui::MainWindow *ui;
 };

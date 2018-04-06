@@ -45,40 +45,43 @@ function [] = process_vpgtracker_data(inputfilename)
   for i = 1:length(vT)
     vT(i) = i*dT_s;
   end
+  
+  % Waterfall controls
+  Window_s = 30.0;
+  Overlay_s  = 29.0;
 
-  % Lets plot out vpg signals for the selected zones
+  % Lets plot out vpg signal
   figure
-  subplot(2,1,1);
+  subplot(3,1,1);
   plot(vT,M(:,19),'r');
   title('VPG signal for selection zone one');
+  xlabel('Time, s');
   axis([0,vT(end), -3.0, 3.0]);
-  grid on
-  
-  subplot(2,1,2);
-  plot(vT,M(:,20),'b');
-  title('VPG signal for selection zone two');
-  axis([0,vT(end), -3.0, 3.0]);
-  grid on
-    
-  % Lets plot spectrum waterfall
-  Duration_s = 30.0;
-  Overlay_s  = 29.0; 
-  figure 
-  [wfF,wfT,wfE] = fftwaterfall(M(:,19),dT_s,Duration_s,Overlay_s);
-  image(wfF,wfT,wfE);
-  %waterfall(wfF,wfT,wfE);
-  title('Fourier spectrum waterfall for selection zone one');
-  xlabel('Frequency, Hz');
-  ylabel('Time, s');
+  grid on   
+  % Lets plot spectrum waterfall  
+  subplot(3,1,[2,3]);
+  [wfF,wfT,wfE] = fftwaterfall(M(:,19),dT_s,Window_s,Overlay_s);
+  image(wfT,wfF,wfE');
+  title('Normalized amplitude of the Fourier spectrum waterfall for selection zone one');
+  ylabel('Frequency, Hz');
+  xlabel('Time, s');
   colorbar;
   
+  % Second signal
   figure  
-  [wfF,wfT,wfE] = fftwaterfall(M(:,20),dT_s,Duration_s,Overlay_s);
-  image(wfF,wfT,wfE);
-  %waterfall(wfF,wfT,wfE);
-  title('Fourier spectrum waterfall for selection zone two');
-  xlabel('Frequency, Hz');
-  ylabel('Time, s');
+  subplot(3,1,1);
+  plot(vT,M(:,20),'b');
+  title('VPG signal for selection zone two');
+  xlabel('Time, s');
+  axis([0,vT(end), -3.0, 3.0]);
+  grid on
+  % Second waterfall
+  subplot(3,1,[2,3]);
+  [wfF,wfT,wfE] = fftwaterfall(M(:,20),dT_s,Window_s,Overlay_s);
+  image(wfT,wfF,wfE');
+  title('Normalized amplitude of the Fourier spectrum waterfall for selection zone two');
+  ylabel('Frequency, Hz');
+  xlabel('Time, s');
   colorbar;
   
   disp('-----------------------');  

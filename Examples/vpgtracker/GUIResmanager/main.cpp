@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
-    setlocale(LC_CTYPE,"rus");
+    setlocale(LC_CTYPE,"Rus");
 #endif
     QApplication a(argc, argv);
     MainWindow w;
