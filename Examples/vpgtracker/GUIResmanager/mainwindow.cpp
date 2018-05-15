@@ -9,6 +9,8 @@
 #include <QLabel>
 #include <QTimer>
 
+#include "qsurveywebposter.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -86,6 +88,7 @@ void MainWindow::__loadSessionSettings()
     ui->researchesdirLE->setText(_settings.value("Storage/dirname",QString()).toString());
     procname = _settings.value("Process/name", "vpgtracker.exe").toString();
     procargs = _settings.value("Process/args", QStringList() << "--device=0" << "--facesize=256").toStringList();
+    websrvurl = _settings.value("Webserver/url", QString()).toString();
 }
 
 void MainWindow::__saveSessionSetting()
@@ -109,9 +112,10 @@ void MainWindow::__updateParticipantsList()
 void MainWindow::startArrowsProcess()
 {
     QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
+    arrowsoutputfilename = QString("%1/ar_%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
     QStringList _args;
     _args << QString("-i%1/Task.arrows").arg(qApp->applicationDirPath())
-          << QString("-o%1/ar_%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"))
+          << QString("-o%1").arg(arrowsoutputfilename)
           << "-m";
     if(QProcess::startDetached(qApp->applicationDirPath().append("/Arrows.exe"),_args) == false) {
         ui->textEdit->append(tr("Не удалось запустить процесс Arrows.exe"));
@@ -142,7 +146,8 @@ void MainWindow::on_startB_clicked()
             // VPG process
             QStringList _args = procargs;
             _startdt = QDateTime::currentDateTime();
-            _args << QString("--outputfilename=%1/%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
+            vpgtrackeroutputfilename = QString("%1/%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
+            _args << QString("--outputfilename=%1").arg(vpgtrackeroutputfilename);
             proc.setProgram(qApp->applicationDirPath().append("/%1").arg(procname));
             proc.setArguments(_args);           
 
@@ -172,5 +177,9 @@ void MainWindow::readError(QProcess::ProcessError _error)
 void MainWindow::on_stopB_clicked()
 {
     if(proc.state() == QProcess::Running)
-        proc.kill();    
+        proc.kill();
+
+    if(!websrvurl.isEmpty()) {
+        postSurvey(websrvurl,arrowsoutputfilename,vpgtrackeroutputfilename,ui->participantidCB->currentText(),_startdt);
+    }
 }

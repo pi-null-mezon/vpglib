@@ -42,6 +42,10 @@ private:
     QStringList procargs;
     QDateTime _startdt;
 
+    QString websrvurl;
+    QString vpgtrackeroutputfilename;
+    QString arrowsoutputfilename;
+
     Ui::MainWindow *ui;
 };
 
