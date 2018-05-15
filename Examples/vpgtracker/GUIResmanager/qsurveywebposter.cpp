@@ -28,25 +28,23 @@ void QSurveyWebposter::run()
     dtPart.setBody(dt.toString("ddMMyyyy_hhmmss").toUtf8());
 
     QHttpPart afilePart;
-    afilePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+    afilePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/csv"));
     afilePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"afile\"; filename=\"afile.csv\""));
     QFile afile(afilename);
     if(afile.open(QIODevice::ReadOnly) == false) {
         qWarning("[QSurveyWebposter] Can not open %s!", afilename.toUtf8().constData());
         return;
     }
-    qInfo("afile size %d bytes", afile.readAll().size());
     afilePart.setBody(afile.readAll());
 
     QHttpPart mfilePart;
-    mfilePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+    mfilePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/csv"));
     mfilePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"mfile\"; filename=\"mfile.csv\""));
     QFile mfile(mfilename);
     if(mfile.open(QIODevice::ReadOnly) == false) {
         qWarning("[QSurveyWebposter] Can not open %s!", mfilename.toUtf8().constData());
         return;
     }
-    qInfo("mfile size %d bytes", mfile.readAll().size());
     mfilePart.setBody(mfile.readAll());
 
     multiPart->append(labelPart);
