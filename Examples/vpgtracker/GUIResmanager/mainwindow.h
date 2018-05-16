@@ -6,6 +6,8 @@
 #include <QProcess>
 #include <QDateTime>
 
+#include "qsurveywebposter.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -27,6 +29,8 @@ private slots:
     void readError(QProcess::ProcessError _error);
     void on_stopB_clicked();
     void startArrowsProcess();
+    void printSrvRepeat(const QString &_msg);
+    void whenArrowsEnded(QProcess::ProcessState _state);
 
 protected:
     void closeEvent(QCloseEvent *_event);
@@ -36,7 +40,7 @@ private:
     void __saveSessionSetting();
     void __updateParticipantsList();    
 
-    QProcess proc;
+    QProcess proc,arrows;
 
     QString procname;
     QStringList procargs;
@@ -45,6 +49,8 @@ private:
     QString websrvurl;
     QString vpgtrackeroutputfilename;
     QString arrowsoutputfilename;
+
+    QMessageHolder msgholder;
 
     Ui::MainWindow *ui;
 };

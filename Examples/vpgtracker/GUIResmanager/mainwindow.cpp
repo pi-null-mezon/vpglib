@@ -9,8 +9,6 @@
 #include <QLabel>
 #include <QTimer>
 
-#include "qsurveywebposter.h"
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -22,13 +20,14 @@ MainWindow::MainWindow(QWidget *parent) :
     __updateParticipantsList();
     connect(&proc, SIGNAL(readyRead()), this, SLOT(readProcess()));
     connect(&proc, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(readError(QProcess::ProcessError)));
+    connect(&msgholder, SIGNAL(msgUpdated(QString)), this, SLOT(printSrvRepeat(QString)));
+
+    connect(&arrows, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(whenArrowsEnded(QProcess::ProcessState)));
 }
 
 MainWindow::~MainWindow()
 {
-    if(proc.state() == QProcess::Running)
-        proc.kill();
-
+    ui->stopB->click();
     delete ui;
 }
 
@@ -111,15 +110,38 @@ void MainWindow::__updateParticipantsList()
 
 void MainWindow::startArrowsProcess()
 {
-    QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
-    arrowsoutputfilename = QString("%1/ar_%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
-    QStringList _args;
-    _args << QString("-i%1/Task.arrows").arg(qApp->applicationDirPath())
-          << QString("-o%1").arg(arrowsoutputfilename)
-          << "-m";
-    if(QProcess::startDetached(qApp->applicationDirPath().append("/Arrows.exe"),_args) == false) {
-        ui->textEdit->append(tr("Не удалось запустить процесс Arrows.exe"));
+    if(arrows.state() == QProcess::NotRunning) {
+
+        QString _targetdirname = ui->researchesdirLE->text().append("/%1").arg(ui->participantidCB->currentText());
+        arrowsoutputfilename = QString("%1/ar_%2.csv").arg(_targetdirname,_startdt.toString("ddMMyyyy_hhmmss"));
+        QStringList _args;
+        _args << QString("-i%1/Task.arrows").arg(qApp->applicationDirPath())
+              << QString("-o%1").arg(arrowsoutputfilename)
+              << "-m";
+        arrows.setProgram(qApp->applicationDirPath().append("/Arrows.exe"));
+        arrows.setArguments(_args);
+        arrows.start();        
+    } else {
+         ui->textEdit->setText(tr("Процесс опроса уже запущен!"));
     }
+}
+
+void MainWindow::printSrvRepeat(const QString &_msg)
+{
+    ui->textEdit->append(_msg);
+}
+
+void MainWindow::whenArrowsEnded(QProcess::ProcessState _state)
+{
+    static int _arrowsstate = 0;
+    if((_arrowsstate == 2) && (_state == 0)) { // Running -> NotRunning
+        ui->stopB->click();
+        if(!websrvurl.isEmpty()) {
+            ui->textEdit->append(tr("Исследование завершено, отправляю данные на удалённый сервер"));
+            postSurvey(websrvurl,arrowsoutputfilename,vpgtrackeroutputfilename,ui->participantidCB->currentText(),_startdt,&msgholder);
+        }
+    }
+    _arrowsstate = _state;
 }
 
 void MainWindow::on_participantidCB_activated(const QString &arg1)
@@ -153,9 +175,10 @@ void MainWindow::on_startB_clicked()
 
             ui->textEdit->clear();
             proc.start();
-            QTimer::singleShot(5000,this,SLOT(startArrowsProcess()));
+            ui->textEdit->append(tr("Процесс опроса будет запущен примерно через 10 секунд. Ждите..."));
+            QTimer::singleShot(10000,this,SLOT(startArrowsProcess()));
         } else {
-            ui->textEdit->setText(tr("Процесс уже запущен!"));
+            ui->textEdit->setText(tr("Процесс измерений уже запущен!"));
         }
 
     } else {
@@ -178,8 +201,6 @@ void MainWindow::on_stopB_clicked()
 {
     if(proc.state() == QProcess::Running)
         proc.kill();
-
-    if(!websrvurl.isEmpty()) {
-        postSurvey(websrvurl,arrowsoutputfilename,vpgtrackeroutputfilename,ui->participantidCB->currentText(),_startdt);
-    }
+    if(arrows.state() == QProcess::Running)
+        proc.kill();
 }

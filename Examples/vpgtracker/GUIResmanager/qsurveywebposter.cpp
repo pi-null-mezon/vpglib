@@ -67,14 +67,20 @@ void QSurveyWebposter::run()
         qInfo("[QSurveyWebposter] Reply code: %s", status_code.toString().toUtf8().constData());
     }
     qInfo("[QSurveyWebposter] Error string: %s", reply->errorString().toUtf8().constData());
-    qInfo("[QSurveyWebposter] Server reply: %s", reply->readAll().constData());
+    QByteArray _data(reply->readAll());
+    qInfo("[QSurveyWebposter] Server reply: %s", _data.constData());
+
+    emit surveyPosted(tr("Srvreply: %1 - %2").arg(status_code.toString(),QString(_data)));
 
     reply->deleteLater();
 }
 
-void postSurvey(const QString &_url, const QString &_afilename, const QString &_mfilename, const QString &_label, const QDateTime &_dt)
+void postSurvey(const QString &_url, const QString &_afilename, const QString &_mfilename, const QString &_label, const QDateTime &_dt, QMessageHolder *_msgholder)
 {
     QSurveyWebposter *_wThread = new QSurveyWebposter(_url,_afilename,_mfilename,_label,_dt);
     QObject::connect(_wThread,SIGNAL(finished()), _wThread, SLOT(deleteLater()));
+    if(_msgholder != 0) {
+        QObject::connect(_wThread,SIGNAL(surveyPosted(QString)),_msgholder,SLOT(updateMessage(QString)));
+    }
     _wThread->start();
 }
