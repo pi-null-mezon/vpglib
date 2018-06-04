@@ -38,7 +38,8 @@ win32 {
             -l$$qtLibraryName(opencv_highgui$${OPENCV_VERSION}) \
             -l$$qtLibraryName(opencv_imgproc$${OPENCV_VERSION}) \
             -l$$qtLibraryName(opencv_objdetect$${OPENCV_VERSION}) \
-            -l$$qtLibraryName(opencv_videoio$${OPENCV_VERSION})
+            -l$$qtLibraryName(opencv_videoio$${OPENCV_VERSION}) \
+            -l$$qtLibraryName(opencv_imgcodecs$${OPENCV_VERSION})
 
     DEFINES += OPENCV_DATA_DIR=\\\"$${OPENCV_DIR}/../sources/data\\\"
 
@@ -53,5 +54,6 @@ linux {
             -lopencv_objdetect \
             -lopencv_highgui \
             -lopencv_imgproc \
-            -lopencv_videoio
+            -lopencv_videoio \
+            -lopencv_imgcodecs
 }
