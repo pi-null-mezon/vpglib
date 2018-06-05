@@ -13,30 +13,39 @@ VPGService::~VPGService()
 
 void VPGService::start()
 {
-    QGuiApplication *app = application();
-    daemon = new QVPGServer(2308,app);
-
-    if(daemon->isListening() == false) {
-        QString _msg = QString("Failed to bind to port %1").arg(daemon->serverPort());
-        qDebug("%s! Abort...", _msg.toLocal8Bit().constData());
-        logMessage(_msg, QtServiceBase::Error);
-        app->quit();
+    QGuiApplication *app = application();    
+    auto argslist = app->arguments();
+    quint16 port = 2308;
+    for(int i = 0; i < argslist.size(); ++i) {
+        if(argslist.at(i).contains("-p")) {
+            port = argslist.at(i).section("-p",1,1).toUShort();
+            break;
+        }
     }
 
-    qDebug("%s started", this->serviceName().toLocal8Bit().constData());
+    daemon = new QVPGServer(port,app);
+
+    if(daemon->isListening() == false) {
+        QString _msg = QString("Failed to bind to port %1").arg(port);
+        qInfo("%s! Abort...", _msg.toLocal8Bit().constData());
+        logMessage(_msg, QtServiceBase::Error);
+        app->quit();
+    } else {
+        qInfo("%s listening incoming connections on ws://localhost:%d", this->serviceName().toLocal8Bit().constData(), daemon->serverPort());
+    }
 }
 
 void VPGService::pause()
 {
-    qDebug("%s paused", this->serviceName().toLocal8Bit().constData());
+    qInfo("%s paused", this->serviceName().toLocal8Bit().constData());
 }
 
 void VPGService::resume()
 {
-    qDebug("%s resumed", this->serviceName().toLocal8Bit().constData());
+    qInfo("%s resumed", this->serviceName().toLocal8Bit().constData());
 }
 
 void VPGService::stop()
 {
-    qDebug("%s stoped", this->serviceName().toLocal8Bit().constData());
+    qInfo("%s stoped", this->serviceName().toLocal8Bit().constData());
 }

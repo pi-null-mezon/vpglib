@@ -18,14 +18,14 @@ public:
     int             getVideodevID() const;
     void            setVideodevID(int _id);
 
-    double          measureActualFPS(unsigned int _howlong_to_measure_ms=3000);
-
 signals:
     void error(const QString &_msg);
     void frameUpdated(const cv::Mat &_cvmat);
     void preparedForVPG();
+    void fpsMeasured(double _fps);
 
-public slots:    
+public slots:
+    void measureActualFPS(unsigned int _howlong_to_measure_ms=3000);
     void open();
     void pause();
     void resume();

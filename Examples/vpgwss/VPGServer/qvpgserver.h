@@ -7,6 +7,7 @@
 
 #include "qvideosource.h"
 #include "qfacetracker.h"
+#include "qvpgprocessor.h"
 
 class QVPGServer : public QObject
 {
@@ -34,7 +35,7 @@ private slots:
     void __commutate();
     void __decommutate();
 
-    void sendFaceImage(const cv::Mat &_faceimg);
+    void sendFrame(const cv::Mat &_faceimg);
 
     void reportAboutError(const QString &_msg);
 
@@ -47,6 +48,9 @@ private:
 
     QFaceTracker *qfacetracker;
     QThread *qfacetrackerthread;
+
+    QVPGProcessor *qvpgproc;
+    QThread *qvpgprocthread;
 };
 
 #endif // QVPGSERVER_H

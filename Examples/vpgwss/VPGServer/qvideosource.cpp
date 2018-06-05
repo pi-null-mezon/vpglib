@@ -71,7 +71,7 @@ void QVideoSource::resume()
     }
 }
 
-double QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
+void QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
 {
     // Backend independent function
     QElapsedTimer _elapsedtimer;
@@ -83,7 +83,7 @@ double QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
             _elapsedtimer.start();
         } else if(_frames > _startshift) {
             _timeelapsed_ms = _elapsedtimer.elapsed();
-            qInfo("%d) %f ms", _frames, _timeelapsed_ms);
+            /*qDebug("%d) %f ms", _frames, _timeelapsed_ms);*/
         }
         _frames++;        
     });
@@ -92,8 +92,9 @@ double QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
     _el.exec();
     disconnect(_moconn);
     double _actualfps = 1000.0*(_frames-_startshift-1)/_timeelapsed_ms;
-    qInfo("QVideoSource: actual FPS measured %f", _actualfps);
-    return _actualfps;
+    qDebug("QVideoSource: actual FPS measured %.2f", _actualfps);
+    if(!std::isinf(_actualfps))
+        emit fpsMeasured(_actualfps);
 }
 
 void QVideoSource::init()

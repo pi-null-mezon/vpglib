@@ -13,9 +13,8 @@ QVPGServer::QVPGServer(quint16 port, QObject *parent) : QObject(parent),
     if(qwssrv->listen(QHostAddress::LocalHost,port)) {
         setupVideosource();
         setupFaceTracker();
-        setupVPGProcessor();
-        connect(qwssrv,SIGNAL(newConnection()),SLOT(enrollConnection()));
-        qInfo("%s listening incoming connections on ws://localhost:%d", APP_NAME, serverPort());
+        setupVPGProcessor();        
+        connect(qwssrv,SIGNAL(newConnection()),SLOT(enrollConnection()));       
     }
 }
 
@@ -23,10 +22,14 @@ QVPGServer::~QVPGServer()
 {
     if(isListening()) {
         __decommutate();
-        QTimer::singleShot(0,qvideosource,SLOT(close()));
-        QTimer::singleShot(0,qfacetrackerthread,SLOT(quit()));
-        QTimer::singleShot(0,qvideosourcethread,SLOT(quit()));
 
+        QTimer::singleShot(0,qvideosource,SLOT(close()));
+
+        QTimer::singleShot(0,qvpgprocthread,SLOT(quit()));
+        QTimer::singleShot(0,qfacetrackerthread,SLOT(quit()));
+        QTimer::singleShot(0,qvideosourcethread,SLOT(quit()));        
+
+        qvpgprocthread->wait();
         qfacetrackerthread->wait();
         qvideosourcethread->wait();
     }
@@ -55,11 +58,11 @@ void QVPGServer::setupVideosource()
 
 void QVPGServer::setupFaceTracker()
 {
-    qfacetracker = new QFaceTracker(4,FaceTracker::AlignMethod::FaceShape);
-    qfacetracker->setTargetSize(cv::Size(150,200));
+    qfacetracker = new QFaceTracker(8,FaceTracker::AlignMethod::FaceShape);
+    qfacetracker->setTargetSize(cv::Size(256,340));
     bool _isloaded = qfacetracker->loadFaceClassifier(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml"));
     assert(_isloaded);
-    unsigned long _numparts = qfacetracker->loadFaceShapePredictor(qApp->applicationDirPath().append("/shape_predictor_5_face_landmarks.dat"));
+    unsigned long _numparts = qfacetracker->loadFaceShapePredictor(qApp->applicationDirPath().append("/shape_predictor_68_face_landmarks.dat"));
     assert(_numparts);
     qfacetrackerthread = new QThread(this);
     qfacetracker->moveToThread(qfacetrackerthread);
@@ -69,7 +72,12 @@ void QVPGServer::setupFaceTracker()
 
 void QVPGServer::setupVPGProcessor()
 {
-
+    qvpgproc = new QVPGProcessor();
+    qvpgprocthread = new QThread(this);
+    qvpgproc->moveToThread(qvpgprocthread);
+    connect(qvpgprocthread,SIGNAL(finished()),qvpgproc,SLOT(deleteLater()));
+    connect(qvideosource,SIGNAL(fpsMeasured(double)),qvpgproc,SLOT(init(double)));
+    qvpgprocthread->start();
 }
 
 void QVPGServer::enrollConnection()
@@ -109,29 +117,34 @@ void QVPGServer::closeVideodevice()
 }
 
 void QVPGServer::openVideodevice(int _id)
-{
+{   
+    QTimer::singleShot(0,qvpgproc,SLOT(deinit()));
     qvideosource->setVideodevID(_id);
     QTimer::singleShot(0,qvideosource,SLOT(open()));
+    QTimer::singleShot(0,qvideosource,SLOT(measureActualFPS()));
     __commutate();
 }
 
 void QVPGServer::__commutate()
 {
     connect(qvideosource,SIGNAL(frameUpdated(cv::Mat)),qfacetracker,SLOT(updateImage(cv::Mat)),Qt::BlockingQueuedConnection);
-    connect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),this,SLOT(sendFaceImage(cv::Mat)));
+    connect(qfacetracker,SIGNAL(frameProcessed(cv::Mat)),this,SLOT(sendFrame(cv::Mat)));
+    connect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),qvpgproc,SLOT(enrollFace(cv::Mat)));
 }
 
 void QVPGServer::__decommutate()
 {
     disconnect(qvideosource,SIGNAL(frameUpdated(cv::Mat)),qfacetracker,SLOT(updateImage(cv::Mat)));
-    disconnect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),this,SLOT(sendFaceImage(cv::Mat)));
+    disconnect(qfacetracker,SIGNAL(frameProcessed(cv::Mat)),this,SLOT(sendFrame(cv::Mat)));
+    disconnect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),qvpgproc,SLOT(enrollFace(cv::Mat)));
 }
 
-void QVPGServer::sendFaceImage(const cv::Mat &_faceimg)
+void QVPGServer::sendFrame(const cv::Mat &_faceimg)
 {
     std::vector<uchar>  _encodedimg;
     cv::imencode("*.jpg",_faceimg,_encodedimg);
     websocket->sendBinaryMessage(QByteArray::fromRawData((const char *)&_encodedimg[0],_encodedimg.size()));
+    websocket->sendTextMessage("This is a text from the VPGService");
 }
 
 void QVPGServer::reportAboutError(const QString &_msg)

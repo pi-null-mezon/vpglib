@@ -17,8 +17,7 @@ public:
 
 signals:
     void faceUpdated(const cv::Mat &faceImg);
-    void faceCoordsUpdated(const cv::RotatedRect &_rrect, const cv::Rect &_csrect);
-    void foundFace(bool _wasfound);
+    void frameProcessed(const cv::Mat &frame);
 
 public slots:
     void updateImage(const cv::Mat &img);
@@ -27,9 +26,6 @@ public slots:
     void setFaceShapePredictor(dlib::shape_predictor *pt);
     bool loadFaceClassifier(const QString &_filename);
     unsigned long loadFaceShapePredictor(const QString &_filename);
-    void setStrobe(uint value);
-    uint getStrobe() const;
-    void setGrayMode(bool value);
     void setTargetSize(const cv::Size &size);
     void setFaceRectPortions(float _xPortion, float _yPortion);
     void setFaceRectShifts(float _xShift, float _yShift);
@@ -38,9 +34,6 @@ private:
     cv::CascadeClassifier facecascadeclassifier;
     dlib::shape_predictor faceshapepredictor;
     FaceTracker *pt_tracker;
-    uint m_counter;
-    uint m_strobeValue;
-    bool f_gray;
     cv::Size m_size;
 };
 

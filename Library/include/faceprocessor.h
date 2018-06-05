@@ -84,7 +84,7 @@ public:
      */
     void enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect=cv::Rect());
     /**
-     * Extract average colorsd from 4-part face partition
+     * Extract average colors from 4-part face partition
      * Pratition is clockwise, starts from left part of the forehead: |3|0|
      *                                                                |2|1|
      * @param rgbImage - input image of the face, BGR format only
@@ -133,7 +133,6 @@ private:
     bool f_firstface;
     cv::Rect m_faceRect;
     cv::Size m_minFaceSize;
-    cv::Size m_blurSize;
 
     cv::Rect __getMeanRect() const;
     void __updateRects(const cv::Rect &rect);

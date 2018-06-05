@@ -37,7 +37,6 @@ void FaceProcessor::__init()
     m_nofaceframes = 0;
     f_firstface = true;
     m_minFaceSize = cv::Size(80,80);
-    m_blurSize = cv::Size(3,3);
 }
 
 FaceProcessor::~FaceProcessor()
@@ -96,8 +95,7 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     unsigned long area = 0;
 
     if(m_faceRect.area() > 0 && m_nofaceframes < FACE_PROCESSOR_LENGTH) {
-        cv::Mat region = cv::Mat(rgbImage, m_faceRect).clone();
-        cv::blur(region,region, m_blurSize);
+        cv::Mat region = cv::Mat(rgbImage, m_faceRect);
         int dX = W / 16;
         int dY = H / 30;
         // It will be rect inside m_faceRect
@@ -142,8 +140,7 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, dou
     unsigned long blue = 0;
     unsigned long area = 0;
     if(roirect.area() > 0) {
-        cv::Mat region = cv::Mat(rgbImage, roirect).clone();
-        cv::blur(region,region, m_blurSize);
+        cv::Mat region = cv::Mat(rgbImage,roirect);
         unsigned char *ptr;
         unsigned char tR = 0, tG = 0, tB = 0;
         #pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
@@ -192,8 +189,7 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
     unsigned long a[] = {0, 0, 0, 0};
 
     if(faceRect.area() > 0) {
-        cv::Mat region = cv::Mat(rgbImage, faceRect).clone();
-        cv::blur(region,region, m_blurSize);
+        cv::Mat region = cv::Mat(rgbImage,faceRect);
         m_ellRect = cv::Rect(X, Y - 6 * dY, W, H + 6 * dY);
         X = m_ellRect.x;
         W = m_ellRect.width;
@@ -212,14 +208,14 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
                             g[3] += tG;
                             r[3] += tR;
                             a[3]++;
-                            p[3*i] %= 32;
-                            p[3*i+2] %= 32;
+                            //p[3*i] %= 32;
+                            //p[3*i+2] %= 32;
                         } else if (i > X + W / 2) {
                             b[0] += tB;
                             g[0] += tG;
                             r[0] += tR;;
                             a[0]++;
-                            p[3*i] %= 32;
+                            //p[3*i] %= 32;
                         }
                     } else if( (j > Y + 3*H / 7) && (j < Y + 5*H / 7)) {
                         if( i < X + W / 2) {
@@ -227,13 +223,13 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
                             g[2] += tG;
                             r[2] += tR;
                             a[2]++;
-                            p[3*i+1] %= 32;
+                            //p[3*i+1] %= 32;
                         } else if (i > X + W / 2) {
                             b[1] += tB;
                             g[1] += tG;
                             r[1] += tR;
                             a[1]++;
-                            p[3*i+2] %= 32;
+                            //p[3*i+2] %= 32;
                         }
                     }
                 }
@@ -244,7 +240,7 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
     resT = ((double)cv::getTickCount() - (double)m_markTime)*1000.0 / cv::getTickFrequency();
     m_markTime = cv::getTickCount();
     for(int i = 0; i < 4; i++) {
-        if(a[i] > 1000) {
+        if(a[i] > static_cast<unsigned long>(m_minFaceSize.area()/8)) {
             v_resBlue[i] = (double)b[i] / a[i];
             v_resGreen[i] = (double)g[i] / a[i];
             v_resRed[i] = (double)r[i] / a[i];

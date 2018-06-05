@@ -10,11 +10,11 @@ FaceTracker::FaceTracker(uchar length, AlignMethod method) :
     m_pos(0),
     m_angle(0.0),    
     m_method(method),    
-    m_minNeighbours(11),
-    m_xPortion(1.1f),
-    m_yPortion(1.2f),
+    m_minNeighbours(9),
+    m_xPortion(1.0f),
+    m_yPortion(1.0f),
     m_xShift(0.0f),
-    m_yShift(0.1f),
+    m_yShift(0.0f),
     m_primaryfacedetectortupe(FaceTracker::ViolaJones)
 {
     v_rectHistory = new cv::Rect[m_historyLength];
@@ -319,7 +319,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                 cv::Point2f peyes = _righteyecenter - _lefteyecenter;
                 m_angle += 30.0 * std::atan(peyes.y / peyes.x) / PI_VALUE; // 180.0 produces angle jitter, and 90.0 looks more stable
                 for(size_t i = 0; i < faceshape.num_parts(); ++i) {
-                    faceshape.part(i) -= dlib::point(_dlibfaceimg.nc()/2.0f,_dlibfaceimg.nr()/2.0f);
+                    faceshape.part(i) -= dlib::point(_dlibfaceimg.nc()/2.0f - m_xShift*faceRect.width,_dlibfaceimg.nr()/2.0f - m_yShift*faceRect.height);
                 }
             }
             break;
