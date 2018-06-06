@@ -3,7 +3,7 @@ QT += gui websockets multimedia
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = VPGSrv
+TARGET = VPGService
 VERSION = 1.0.0.0
 
 DEFINES += APP_NAME=\\\"$${TARGET}\\\" \

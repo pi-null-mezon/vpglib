@@ -175,7 +175,7 @@ void QVPGProcessor::__releaseMemory()
 void QVPGProcessor::__meas2json(const dlib::full_object_detection &_faceshape)
 {
     QJsonArray _jshape;
-    for(int i = 0; i < _faceshape.num_parts(); ++i) {
+    for(unsigned long i = 0; i < _faceshape.num_parts(); ++i) {
         QJsonObject _jpoint;
         _jpoint["x"] = static_cast<int>(_faceshape.part(i).x());
         _jpoint["y"] = static_cast<int>(_faceshape.part(i).y());
