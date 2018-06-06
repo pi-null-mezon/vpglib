@@ -4,6 +4,7 @@ QFaceTracker::QFaceTracker(uchar _length, FaceTracker::AlignMethod _method, QObj
 {
     pt_tracker = new FaceTracker(_length, _method);
     qRegisterMetaType<cv::RotatedRect>("cv::RotatedRect");
+    qRegisterMetaType<dlib::full_object_detection>("dlib::full_object_detection");
 }
 
 QFaceTracker::~QFaceTracker()
@@ -66,8 +67,10 @@ void QFaceTracker::updateImage(const cv::Mat &img)
                _faceshape.part(i) = _tp;
            }
            render_face_shape(frame,_faceshape);
+           emit faceUpdated(faceImage,_faceshape);
+        } else {
+            qDebug("QFaceTracker::Warning - selected face align method does not produce face shape points!");
         }
-        emit faceUpdated(faceImage);
     }
     emit frameProcessed(frame);
 }

@@ -21,6 +21,9 @@ void QVideoSource::open()
 {
     if(devid > -1) {
         if(cvvideocapture.open(devid)) {
+            cvvideocapture.set(cv::CAP_PROP_FRAME_WIDTH, 640.0);
+            cvvideocapture.set(cv::CAP_PROP_FRAME_HEIGHT, 480.0);
+            cvvideocapture.set(cv::CAP_PROP_FPS, 15.0);
             timer->start();
         } else {
             emit error(QString("QVideoSource::Error - Can not open video device with id %1!").arg(QString::number(devid)));
@@ -74,16 +77,15 @@ void QVideoSource::resume()
 void QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
 {
     // Backend independent function
-    QElapsedTimer _elapsedtimer;
-    double _timeelapsed_ms = 0;
-    unsigned int  _frames = 0;
-    unsigned int  _startshift = 1;
+    QElapsedTimer _qeltimer;
+    double _elapsedms = 0;
+    uint  _frames = 0, _shift = 1;
     auto _moconn = connect(this, &QVideoSource::frameUpdated, [&]() {
-        if(_frames == _startshift) {
-            _elapsedtimer.start();
-        } else if(_frames > _startshift) {
-            _timeelapsed_ms = _elapsedtimer.elapsed();
-            /*qDebug("%d) %f ms", _frames, _timeelapsed_ms);*/
+        if(_frames == _shift) {
+            _qeltimer.start();
+        } else if(_frames > _shift){
+            _elapsedms = _qeltimer.elapsed();
+            //qDebug("%d) %f ms", _frames, _elapsedms);
         }
         _frames++;        
     });
@@ -91,8 +93,8 @@ void QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
     QTimer::singleShot(_howlong_to_measure_ms,&_el,SLOT(quit()));
     _el.exec();
     disconnect(_moconn);
-    double _actualfps = 1000.0*(_frames-_startshift-1)/_timeelapsed_ms;
-    qDebug("QVideoSource: actual FPS measured %.2f", _actualfps);
+    double _actualfps = 1000.0*(_frames - _shift - 1)/_elapsedms;
+    //qDebug("QVideoSource: actual FPS measured %.2f", _actualfps);
     if(!std::isinf(_actualfps))
         emit fpsMeasured(_actualfps);
 }

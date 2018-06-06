@@ -2,6 +2,10 @@
 #define QVPGPROCESSOR_H
 
 #include <QObject>
+#include <QJsonObject>
+#include <QJsonArray>
+
+#include <dlib/image_processing/shape_predictor.h>
 
 #include "vpg.h"
 
@@ -13,16 +17,17 @@ public:
     ~QVPGProcessor();        
 
 signals:
-    void measurementsUpdated();
+    void measurementsUpdated(const QJsonObject &json);
 
 public slots:
     void init(double _fps);
     void deinit();
-    void enrollFace(const cv::Mat &_mat);
+    void enrollFace(const cv::Mat &_mat, const dlib::full_object_detection &_faceshape);
 
 private:
     void __checkChannelsCorrelation();
     void __releaseMemory();
+    void __meas2json(const dlib::full_object_detection &_faceshape);
 
     vpg::FaceProcessor  *faceproc;
     vpg::PulseProcessor *pulseproc;
@@ -31,7 +36,7 @@ private:
     std::vector<double> vhrhistory;
     size_t hrpos;
 
-    double fps, hrPeriod, brPeriod, vR[4], vG[4], vB[4], time;
+    double fps, hrPeriod, brPeriod, vR[4], vG[4], vB[4], red, green ,blue, hr, br, time;
     bool initialized;
 };
 

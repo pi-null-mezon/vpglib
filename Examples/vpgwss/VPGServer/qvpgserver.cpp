@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QHostAddress>
 #include <QWebSocket>
+#include <QJsonDocument>
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -58,7 +59,7 @@ void QVPGServer::setupVideosource()
 
 void QVPGServer::setupFaceTracker()
 {
-    qfacetracker = new QFaceTracker(8,FaceTracker::AlignMethod::FaceShape);
+    qfacetracker = new QFaceTracker(4,FaceTracker::AlignMethod::FaceShape);
     qfacetracker->setTargetSize(cv::Size(256,340));
     bool _isloaded = qfacetracker->loadFaceClassifier(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml"));
     assert(_isloaded);
@@ -103,10 +104,6 @@ void QVPGServer::parseCommand(const QString &_cmd)
         openVideodevice(_cmd.section('(',1,1).section(')',0,0).toInt());
     } else if(_cmd.contains("closevideodev")) {
         closeVideodevice();
-    } else if(_cmd.contains("setimgsize")) {
-        int _w = _cmd.section('(',1,1).section(',',0,0).toInt();
-        int _h = _cmd.section(',',1,1).section(')',0,0).toInt();
-        qfacetracker->setTargetSize(cv::Size(_w,_h));
     }
 }
 
@@ -121,7 +118,8 @@ void QVPGServer::openVideodevice(int _id)
     QTimer::singleShot(0,qvpgproc,SLOT(deinit()));
     qvideosource->setVideodevID(_id);
     QTimer::singleShot(0,qvideosource,SLOT(open()));
-    QTimer::singleShot(0,qvideosource,SLOT(measureActualFPS()));
+    //QTimer::singleShot(0,qvideosource,SLOT(measureActualFPS()));
+    qvideosource->measureActualFPS();
     __commutate();
 }
 
@@ -129,22 +127,28 @@ void QVPGServer::__commutate()
 {
     connect(qvideosource,SIGNAL(frameUpdated(cv::Mat)),qfacetracker,SLOT(updateImage(cv::Mat)),Qt::BlockingQueuedConnection);
     connect(qfacetracker,SIGNAL(frameProcessed(cv::Mat)),this,SLOT(sendFrame(cv::Mat)));
-    connect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),qvpgproc,SLOT(enrollFace(cv::Mat)));
+    connect(qfacetracker,SIGNAL(faceUpdated(cv::Mat,dlib::full_object_detection)),qvpgproc,SLOT(enrollFace(cv::Mat,dlib::full_object_detection)));
+    connect(qvpgproc,SIGNAL(measurementsUpdated(QJsonObject)),this,SLOT(sendMeasurements(QJsonObject)));
 }
 
 void QVPGServer::__decommutate()
 {
     disconnect(qvideosource,SIGNAL(frameUpdated(cv::Mat)),qfacetracker,SLOT(updateImage(cv::Mat)));
     disconnect(qfacetracker,SIGNAL(frameProcessed(cv::Mat)),this,SLOT(sendFrame(cv::Mat)));
-    disconnect(qfacetracker,SIGNAL(faceUpdated(cv::Mat)),qvpgproc,SLOT(enrollFace(cv::Mat)));
+    disconnect(qfacetracker,SIGNAL(faceUpdated(cv::Mat,dlib::full_object_detection)),qvpgproc,SLOT(enrollFace(cv::Mat,dlib::full_object_detection)));
+    disconnect(qvpgproc,SIGNAL(measurementsUpdated(QJsonObject)),this,SLOT(sendMeasurements(QJsonObject)));
 }
 
 void QVPGServer::sendFrame(const cv::Mat &_faceimg)
 {
     std::vector<uchar>  _encodedimg;
     cv::imencode("*.jpg",_faceimg,_encodedimg);
-    websocket->sendBinaryMessage(QByteArray::fromRawData((const char *)&_encodedimg[0],_encodedimg.size()));
-    websocket->sendTextMessage("This is a text from the VPGService");
+    websocket->sendBinaryMessage(QByteArray::fromRawData((const char *)&_encodedimg[0],_encodedimg.size()));    
+}
+
+void QVPGServer::sendMeasurements(const QJsonObject &_json)
+{
+    websocket->sendTextMessage(QJsonDocument(_json).toJson(QJsonDocument::Compact));
 }
 
 void QVPGServer::reportAboutError(const QString &_msg)

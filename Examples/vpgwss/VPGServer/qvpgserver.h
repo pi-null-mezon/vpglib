@@ -36,6 +36,7 @@ private slots:
     void __decommutate();
 
     void sendFrame(const cv::Mat &_faceimg);
+    void sendMeasurements(const QJsonObject &_json);
 
     void reportAboutError(const QString &_msg);
 

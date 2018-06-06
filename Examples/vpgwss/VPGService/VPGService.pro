@@ -3,7 +3,7 @@ QT += gui websockets multimedia
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = VPGService
+TARGET = VPGSrv
 VERSION = 1.0.0.0
 
 DEFINES += APP_NAME=\\\"$${TARGET}\\\" \
@@ -37,7 +37,7 @@ SOURCES +=  $${PWD}/../../../Library/src/faceprocessor.cpp \
 INCLUDEPATH += $${PWD}/../../../Library/include
 
 include($${PWD}/../../../Shared/opencv.pri)
-
+include($${PWD}/../../../Shared/openmp.pri)
 
 #-------------------------------------------------qtservice
 include($${PWD}/../qtservice/src/qtservice.pri)

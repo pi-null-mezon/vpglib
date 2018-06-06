@@ -44,7 +44,7 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double
             m_Frequency = 0.0;
             m_interval = static_cast<int>( Tcn_ms/ dT_ms );
             m_bottomFrequencyLimit = 0.8; // 48 bpm
-            m_topFrequencyLimit = 3.0;    // 180 bpm
+            m_topFrequencyLimit = 2.5;    // 150 bpm
             break;        
     }
 
@@ -133,7 +133,7 @@ double PulseProcessor::computeFrequency()
         m_snr = -10.0;
         return m_Frequency;
     }
-
+    //cv::blur(v_datamat,v_datamat,cv::Size(3,1));
     cv::dft(v_datamat, v_dftmat);
     const double *v_fft = v_dftmat.ptr<const double>(0);
 
@@ -183,7 +183,7 @@ double PulseProcessor::computeFrequency()
         double bias = (double)i_maxpower - ( signal_moment / signal_power );
         m_snr *= (1.0 / (1.0 + bias*bias));
     }
-    if(m_snr > 3.0)
+    if(m_snr > 2.5)
         m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
 
     return m_Frequency;
@@ -201,6 +201,7 @@ int PulseProcessor::getLastPos() const
 
 const double * PulseProcessor::getSignal() const
 {
+    //return v_datamat.ptr<const double>(0);
     return v_Y;
 }
 

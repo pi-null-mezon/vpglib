@@ -16,7 +16,7 @@ public:
     ~QFaceTracker();
 
 signals:
-    void faceUpdated(const cv::Mat &faceImg);
+    void faceUpdated(const cv::Mat &faceImg,const dlib::full_object_detection &faceshape);
     void frameProcessed(const cv::Mat &frame);
 
 public slots:
@@ -45,7 +45,7 @@ inline void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, co
         //cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
         points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
     }
-    cv::polylines(img, points, isClosed, cv::Scalar(0,255,0), 1, CV_AA);
+    cv::polylines(img, points, isClosed, cv::Scalar(255,127,127), 1, CV_AA);
 }
 
 inline void render_face_shape(cv::Mat &img, const dlib::full_object_detection& d)
@@ -57,7 +57,7 @@ inline void render_face_shape(cv::Mat &img, const dlib::full_object_detection& d
      );
 
     if(d.num_parts() == 68) {
-        draw_polyline(img, d, 0, 16);           // Jaw line
+        //draw_polyline(img, d, 0, 16);           // Jaw line
         draw_polyline(img, d, 17, 21);          // Left eyebrow
         draw_polyline(img, d, 22, 26);          // Right eyebrow
         draw_polyline(img, d, 27, 30);          // Nose bridge

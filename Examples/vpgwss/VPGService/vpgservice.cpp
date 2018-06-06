@@ -31,7 +31,7 @@ void VPGService::start()
         logMessage(_msg, QtServiceBase::Error);
         app->quit();
     } else {
-        qInfo("%s listening incoming connections on ws://localhost:%d", this->serviceName().toLocal8Bit().constData(), daemon->serverPort());
+        qInfo("%s listen incoming connections on ws://localhost:%d", this->serviceName().toLocal8Bit().constData(), daemon->serverPort());
     }
 }
 
