@@ -63,7 +63,7 @@ void QVPGServer::setupFaceTracker()
     qfacetracker->setTargetSize(cv::Size(256,340));
     bool _isloaded = qfacetracker->loadFaceClassifier(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml"));
     assert(_isloaded);
-    unsigned long _numparts = qfacetracker->loadFaceShapePredictor(qApp->applicationDirPath().append("/shape_predictor_68_face_landmarks.dat"));
+    unsigned long _numparts = qfacetracker->loadFaceShapePredictor(qApp->applicationDirPath().append("/shape_predictor_5_face_landmarks.dat"));
     assert(_numparts);
     qfacetrackerthread = new QThread(this);
     qfacetracker->moveToThread(qfacetrackerthread);

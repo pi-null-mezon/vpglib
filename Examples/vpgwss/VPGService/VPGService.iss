@@ -12,6 +12,8 @@
 #define Opencv "C:\Programming\3rdParties\opencv330\build\x86\mingw\bin" 
 #define Qt "C:\Qt\5.9.1\mingw53_32\bin"
 
+#define Points 5
+
 [Setup]
 ; Do not change GUID in future version because GUID is used to determine if app is installed in system or not
 AppId={{A83934D2-A71A-496B-9C30-D263E1891BBF} 
@@ -22,7 +24,7 @@ DefaultDirName={pf}\{#MyAppName}
 DefaultGroupName={#MyAppPublisher}\{#MyAppName}
 InfoAfterFile=C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\afterinstall.md
 OutputDir=C:\Programming\Releases
-OutputBaseFilename=SETUP_{#MyAppName}_v{#MyAppVersion}_gcc_x86
+OutputBaseFilename=SETUP_{#MyAppName}_v{#MyAppVersion}_{#Points}pts_gcc
 ;Ask user to restart
 ;AlwaysRestart=yes
 Compression=lzma
@@ -34,6 +36,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 
 Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\{#MyAppName}.exe"; DestDir: "{app}"; Flags: ignoreversion
+; OpenCV
 Source: "{#Opencv}\libopencv_core330.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Opencv}\libopencv_highgui330.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Opencv}\libopencv_imgproc330.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -45,10 +48,8 @@ Source: "{#Opencv}\libopencv_ml330.dll"; DestDir: "{app}"; Flags: ignoreversion
 ;Qt
 Source: "{#Qt}\Qt5Core.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Qt}\Qt5Concurrent.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Qt}\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Qt}\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Qt}\Qt5Network.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Qt}\Qt5Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#Qt}\Qt5Gui.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Qt}\Qt5WebSockets.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Qt}\libgcc_s_dw2-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Qt}\libstdc++-6.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -58,11 +59,11 @@ Source: "{#Qt}\..\plugins\platforms\qwindows.dll"; DestDir: "{app}\platforms"; F
 Source: "C:\Programming\3rdParties\OpenSSL\openssl-1.0.2n-i386-win32\libeay32.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Programming\3rdParties\OpenSSL\openssl-1.0.2n-i386-win32\ssleay32.dll"; DestDir: "{app}"; Flags: ignoreversion
 ;After installation we should register service in system
-Source: "C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\Resources\regservice.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\Resources\delservice.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\regservice.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\delservice.bat"; DestDir: "{app}"; Flags: ignoreversion
 ;Resources
-Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\haarcascade_frontalface_alt2"; DestDir: "{app}"; Flags: ignoreversion; Attribs: hidden
-Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\shape_predictor_68_face_landmarks.dat"; DestDir: "{app}"; Flags: ignoreversion; Attribs: hidden
+Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\haarcascade_frontalface_alt2.xml"; DestDir: "{app}"; Flags: ignoreversion; Attribs: hidden
+Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\shape_predictor_{#Points}_face_landmarks.dat"; DestDir: "{app}"; Flags: ignoreversion; Attribs: hidden
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
