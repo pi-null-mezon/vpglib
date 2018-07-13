@@ -25,7 +25,6 @@ QVPGServer::~QVPGServer()
         __decommutate();
 
         QTimer::singleShot(0,qvideosource,SLOT(close()));
-
         QTimer::singleShot(0,qvpgprocthread,SLOT(quit()));
         QTimer::singleShot(0,qfacetrackerthread,SLOT(quit()));
         QTimer::singleShot(0,qvideosourcethread,SLOT(quit()));        
@@ -118,8 +117,7 @@ void QVPGServer::openVideodevice(int _id)
     QTimer::singleShot(0,qvpgproc,SLOT(deinit()));
     qvideosource->setVideodevID(_id);
     QTimer::singleShot(0,qvideosource,SLOT(open()));
-    //QTimer::singleShot(0,qvideosource,SLOT(measureActualFPS()));
-    qvideosource->measureActualFPS();
+    QTimer::singleShot(50,qvideosource,SLOT(measureActualFPS()));
     __commutate();
 }
 

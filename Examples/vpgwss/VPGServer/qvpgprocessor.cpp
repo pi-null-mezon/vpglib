@@ -83,7 +83,7 @@ void QVPGProcessor::init(double _fps)
     __releaseMemory();
     if(std::isinf(_fps) == false) {
         fps = _fps;
-        faceproc = new vpg::FaceProcessor();
+        faceproc = new vpg::FaceProcessor(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml").toStdString());
         pulseproc = new vpg::PulseProcessor(1000.0 / _fps);
         peakdet = new vpg::PeakDetector(pulseproc->getLength(), 27, 11, 1000.0 / _fps);
         pulseproc->setPeakDetector(peakdet);
@@ -116,51 +116,56 @@ void QVPGProcessor::deinit()
 void QVPGProcessor::enrollFace(const cv::Mat &_mat, const dlib::full_object_detection &_faceshape)
 {   
     if(initialized) {
+
         // Enroll face image
-        faceproc->enrollFace(_mat,vR,vG,vB,time);
-        double _dummytime;
-        faceproc->enrollImagePart(_mat,red,green,blue,_dummytime);
-        // Update vpg signal
-        pulseproc->update(green,time);
+        faceproc->enrollImage(_mat,reflectance,time);
+        if(faceproc->getFaceRect().area() > 0)  {
+            cv::Mat _facemat = cv::Mat(_mat,faceproc->getFaceRect());
+            double _dummytime;
+            faceproc->enrollFace(cv::Mat(_mat,faceproc->getFaceRect()),vR,vG,vB,_dummytime);
+            faceproc->enrollImagePart(cv::Mat(_mat,faceproc->getFaceRect()),red,green,blue,_dummytime);
 
-        // For Debug purpose
-        /*drawDataWindow("QVPGProcessor",cv::Size(640,240),
-                       std::vector<const double*>(1,pulseproc->getSignal()),pulseproc->getLength(),
-                       3.0,-3.0,std::vector<cv::Scalar>(1,cv::Scalar(0,255,0)));*/
+            // Update vpg signal
+            pulseproc->update(reflectance,time);
 
-        // Check if HR need to be updated
-        hrPeriod -= time;
-        if(hrPeriod < 0.0) {
-            vhrhistory[hrpos] = pulseproc->computeFrequency();
-            uint validvalues = 0;
-            hr = 0.0;
-            for(size_t i = 0; i < vhrhistory.size(); ++i) {
-                if(vhrhistory[i] > 1.0) {
-                    validvalues++;
-                    hr += vhrhistory[i];
+            // For Debug purpose
+            /*drawDataWindow("QVPGProcessor",cv::Size(640,240),
+                           std::vector<const double*>(1,pulseproc->getSignal()),pulseproc->getLength(),
+                           3.0,-3.0,std::vector<cv::Scalar>(1,cv::Scalar(0,255,0)));*/
+
+            // Check if HR need to be updated
+            hrPeriod -= time;
+            if(hrPeriod < 0.0) {
+                vhrhistory[hrpos] = pulseproc->computeFrequency();
+                uint validvalues = 0;
+                hr = 0.0;
+                for(size_t i = 0; i < vhrhistory.size(); ++i) {
+                    if(vhrhistory[i] > 1.0) {
+                        validvalues++;
+                        hr += vhrhistory[i];
+                    }
                 }
-            }            
-            if(validvalues > 0) {
-                hr /= validvalues;
+                if(validvalues > 0) {
+                    hr /= validvalues;
+                }
+
+                hrPeriod = 1000.0;
+                hrpos = (hrpos + 1) % vhrhistory.size();
             }
 
-            hrPeriod = 1000.0;
-            hrpos = (hrpos + 1) % vhrhistory.size();
+            // Check if BR need to be updated
+            brPeriod -= time;
+            if(brPeriod < 0.0) {
+                br = -0.1 * peakdet->averageCardiointervalms(9) + 85.0;
+                if(br < 6.0 )
+                    br = 6.0;
+                brPeriod = 3000.0;
+            }
+
+            __meas2json(_faceshape);
         }
-
-        // Check if BR need to be updated
-        brPeriod -= time;
-        if(brPeriod < 0.0) {
-            br = -0.1 * peakdet->averageCardiointervalms(9) + 88.0;
-            if(br < 6.0 )
-                br = 6.0;
-            brPeriod = 3000.0;
-        }
-
-        __meas2json(_faceshape);
-
     } else {
-        qDebug("QVPGProcessor::Warning - processor is not initialized");
+        qDebug("QVPGProcessor::Warning - processor is not initialized!");
     }
 }
 

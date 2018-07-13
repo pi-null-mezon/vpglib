@@ -36,7 +36,7 @@ private:
     std::vector<double> vhrhistory;
     size_t hrpos;
 
-    double fps, hrPeriod, brPeriod, vR[4], vG[4], vB[4], red, green ,blue, hr, br, time;
+    double fps, hrPeriod, brPeriod, vR[4], vG[4], vB[4], red, green ,blue, reflectance, hr, br, time;
     bool initialized;
 };
 

@@ -50,9 +50,8 @@ unsigned long QFaceTracker::loadFaceShapePredictor(const QString &_filename)
 
 void QFaceTracker::updateImage(const cv::Mat &img)
 {    
-    cv::Mat faceImage, frame = img;
-
-    faceImage = pt_tracker->getResizedFaceImage(img,m_size);
+    cv::Mat frame = img.clone();
+    cv::Mat faceImage = pt_tracker->getResizedFaceImage(img,m_size);
 
     if(!faceImage.empty()) {       
         if(pt_tracker->getFaceAlignMethod() == FaceTracker::FaceShape) {
@@ -67,7 +66,7 @@ void QFaceTracker::updateImage(const cv::Mat &img)
                _faceshape.part(i) = _tp;
            }
            render_face_shape(frame,_faceshape);
-           emit faceUpdated(faceImage,_faceshape);
+           emit faceUpdated(img,_faceshape);
         } else {
             qDebug("QFaceTracker::Warning - selected face align method does not produce face shape points!");
         }

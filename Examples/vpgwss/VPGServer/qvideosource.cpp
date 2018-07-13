@@ -95,8 +95,7 @@ void QVideoSource::measureActualFPS(unsigned int _howlong_to_measure_ms)
     disconnect(_moconn);
     double _actualfps = 1000.0*(_frames - _shift - 1)/_elapsedms;
     //qDebug("QVideoSource: actual FPS measured %.2f", _actualfps);
-    if(!std::isinf(_actualfps))
-        emit fpsMeasured(_actualfps);
+    emit fpsMeasured(_actualfps);
 }
 
 void QVideoSource::init()
