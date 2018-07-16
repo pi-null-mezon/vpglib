@@ -61,7 +61,7 @@ void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLeng
 
     // Let's slightly blur interpolated HRV signal with uniform kernel
     if(f_smooth)
-        cv::blur(m_intervalsmat, m_intervalsmat, cv::Size(5,1));
+        cv::blur(m_intervalsmat, m_intervalsmat, cv::Size(3,1));
 
     if(_computespectrum) {
     // Evaluate dft of the HRV signal
@@ -128,6 +128,29 @@ bool HRVProcessor::getF_smooth() const
 void HRVProcessor::setF_smooth(bool value)
 {
     f_smooth = value;
+}
+
+double HRVProcessor::computeLF2HF()
+{
+    if(m_intervalsmat.total() > 0) {
+        double _totaldurationms = 0.0;
+        double *_intervalms = m_intervalsmat.ptr<double>(0);
+        for(size_t i = 0; i < m_intervalsmat.total(); i++) {
+            _totaldurationms += _intervalms[i];
+        }
+
+        double _freqstep = 1000.0 / _totaldurationms, _hf = 0.0, _lf = 0.0, _freq;
+        double *_amp = m_amplitudespectrum.ptr<double>(0);
+        for(int i = 0; i <= m_dftmat.cols/2; ++i) {
+            _freq = i*_freqstep;
+            if((_freq > 0.04) && (_freq <= 0.15))
+                _lf += _amp[i];
+            else if((_freq > 0.15) && (_freq <= 0.4))
+                _hf += _amp[i];
+        }
+        return _lf / _hf;
+    }
+    return -1.0;
 }
 
 } // end of namespace vpg

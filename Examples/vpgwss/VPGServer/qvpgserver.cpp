@@ -59,7 +59,7 @@ void QVPGServer::setupVideosource()
 void QVPGServer::setupFaceTracker()
 {
     qfacetracker = new QFaceTracker(4,FaceTracker::AlignMethod::FaceShape);
-    qfacetracker->setTargetSize(cv::Size(256,340));
+    qfacetracker->setTargetSize(cv::Size(128,156));
     bool _isloaded = qfacetracker->loadFaceClassifier(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml"));
     assert(_isloaded);
     unsigned long _numparts = qfacetracker->loadFaceShapePredictor(qApp->applicationDirPath().append("/shape_predictor_5_face_landmarks.dat"));
@@ -139,6 +139,12 @@ void QVPGServer::__decommutate()
 
 void QVPGServer::sendFrame(const cv::Mat &_faceimg)
 {
+    // Let's put watermark on top
+    cv::String _watermarkstr = "fcsystems.org";
+    cv::putText(cv::Mat(_faceimg),_watermarkstr,cv::Point(10,20),CV_FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(0,0,0),1,CV_AA);
+    cv::putText(cv::Mat(_faceimg),_watermarkstr,cv::Point(9,19),CV_FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255),1,CV_AA);
+
+    // Send jpeg picture
     std::vector<uchar>  _encodedimg;
     cv::imencode("*.jpg",_faceimg,_encodedimg);
     websocket->sendBinaryMessage(QByteArray::fromRawData((const char *)&_encodedimg[0],_encodedimg.size()));    

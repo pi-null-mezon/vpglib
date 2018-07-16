@@ -32,6 +32,7 @@ private:
     vpg::FaceProcessor  *faceproc;
     vpg::PulseProcessor *pulseproc;
     vpg::PeakDetector   *peakdet;
+    vpg::HRVProcessor   *hrvproc;
 
     std::vector<double> vhrhistory;
     size_t hrpos;

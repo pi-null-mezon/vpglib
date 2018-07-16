@@ -85,8 +85,9 @@ void QVPGProcessor::init(double _fps)
         fps = _fps;
         faceproc = new vpg::FaceProcessor(qApp->applicationDirPath().append("/haarcascade_frontalface_alt2.xml").toStdString());
         pulseproc = new vpg::PulseProcessor(1000.0 / _fps);
-        peakdet = new vpg::PeakDetector(pulseproc->getLength(), 27, 11, 1000.0 / _fps);
+        peakdet = new vpg::PeakDetector(pulseproc->getLength(), 47, 11, 1000.0 / _fps);
         pulseproc->setPeakDetector(peakdet);
+        hrvproc = new vpg::HRVProcessor();
         vhrhistory.resize(4);
         hrpos = 0;
         hr = 0;
@@ -137,6 +138,7 @@ void QVPGProcessor::enrollFace(const cv::Mat &_mat, const dlib::full_object_dete
             hrPeriod -= time;
             if(hrPeriod < 0.0) {
                 vhrhistory[hrpos] = pulseproc->computeFrequency();
+                hrvproc->enrollIntervals(peakdet->getIntervalsVector(),peakdet->getIntervalsLength());
                 uint validvalues = 0;
                 hr = 0.0;
                 for(size_t i = 0; i < vhrhistory.size(); ++i) {
@@ -175,6 +177,7 @@ void QVPGProcessor::__releaseMemory()
     delete faceproc;
     delete pulseproc;
     delete peakdet;
+    delete hrvproc;
 }
 
 void QVPGProcessor::__meas2json(const dlib::full_object_detection &_faceshape)
@@ -202,6 +205,8 @@ void QVPGProcessor::__meas2json(const dlib::full_object_detection &_faceshape)
     _json["br"] = static_cast<int>(br);
     _json["time"] = time;
     _json["vpg"] = pulseproc->getSignalSampleValue();
+    _json["bsi"] = peakdet->computeBSI();
+    _json["lf2hf"] = hrvproc->computeLF2HF();
     emit measurementsUpdated(_json);
 }
 

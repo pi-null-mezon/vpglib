@@ -62,6 +62,14 @@ public:
     bool getF_smooth() const;
     void setF_smooth(bool value);
 
+    /**
+     * @brief compute relation between low frequencyes and high frequencyes in cardiointervalogramm
+     * @param _cidata - pointer to the vector that stores cardiointervals
+     * @param _length - vector's length
+     * @return index value
+     */
+    double computeLF2HF();
+
 private:
     cv::Mat m_intervalsmat;
     cv::Mat m_dftmat;

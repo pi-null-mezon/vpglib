@@ -63,6 +63,13 @@ public:
      */
     double averageCardiointervalms(int _n=9) const;
 
+    /**
+     * @brief compute Bayevsky's Stress Index
+     * @param _cidata - pointer to the vector that stores cardiointervals
+     * @param _length - vector's length
+     * @return index value
+     */
+    double computeBSI();
 
 private:
     void __init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms);

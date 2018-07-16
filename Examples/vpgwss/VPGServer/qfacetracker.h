@@ -64,7 +64,7 @@ inline void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, co
         //cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
         points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
     }
-    cv::polylines(img, points, isClosed, cv::Scalar(255,127,127), 1, CV_AA);
+    cv::polylines(img, points, isClosed, cv::Scalar(127,255,127), 1, CV_AA);
 }
 
 inline void render_face_shape(cv::Mat &img, const dlib::full_object_detection& d)
@@ -86,8 +86,8 @@ inline void render_face_shape(cv::Mat &img, const dlib::full_object_detection& d
         draw_polyline(img, d, 48, 59, true);    // Outer lip
         draw_polyline(img, d, 60, 67, true);    // Inner lip
     } else if(d.num_parts() == 5) {
-        draw_eyes(img, d);
-        /*draw_polyline(img, d, 0, 1);    // Left eye
+        //draw_eyes(img, d);
+        draw_polyline(img, d, 0, 1);    // Left eye
         draw_polyline(img, d, 2, 3);    // Right Eye
         draw_polyline(img, d, 4, 4);    // Lower nose*/
     }

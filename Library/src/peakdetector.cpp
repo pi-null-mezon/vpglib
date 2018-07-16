@@ -113,6 +113,21 @@ double PeakDetector::averageCardiointervalms(int _n) const
     return _tms / _n;
 }
 
+double PeakDetector::computeBSI()
+{
+    std::vector<double> _vci(getIntervalsVector(),getIntervalsVector() + getIntervalsLength());
+    std::nth_element(_vci.begin(),_vci.begin()+_vci.size()/2,_vci.end());
+    double _median = _vci[_vci.size()/2];
+    uint _blobsize = 0;
+    for(size_t i = 0; i < _vci.size(); ++i) {
+        if(std::abs(_vci[i] - _median) < 25.0) { // 25 millisecond is a half width of a CI histogram blob
+            _blobsize++;
+        }
+    }
+    auto _minmax = std::minmax_element(_vci.begin(),_vci.end());
+    return (100.0*_blobsize/_vci.size()) / ((2.0 * _median * (*_minmax.second - *_minmax.first))/1.0E6);
+}
+
 void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms)
 {
     curposforsignal = 0;
