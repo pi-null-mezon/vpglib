@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "VPGService"
-#define MyAppVersion "1.0.2.0"
+#define MyAppVersion "1.0.2.1"
 #define MyAppPublisher "SystemFailure"
 #define MyAppExeName "VPGService.exe"
 
@@ -25,7 +25,6 @@ DefaultGroupName={#MyAppPublisher}\{#MyAppName}
 InfoAfterFile=C:\Programming\vpglib\Examples\vpgwss\{#MyAppName}\afterinstall.md
 OutputDir=C:\Programming\Releases
 OutputBaseFilename=SETUP_{#MyAppName}_v{#MyAppVersion}_{#Points}pts_gcc
-;Ask user to restart
 ;AlwaysRestart=yes
 Compression=lzma
 SolidCompression=yes
@@ -34,7 +33,6 @@ SolidCompression=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-
 Source: "C:\Programming\vpglib\Examples\vpgwss\build\build-{#MyAppName}-Desktop_Qt_5_9_1_MinGW_32bit-Release\release\{#MyAppName}.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; OpenCV
 Source: "{#Opencv}\libopencv_core330.dll"; DestDir: "{app}"; Flags: ignoreversion

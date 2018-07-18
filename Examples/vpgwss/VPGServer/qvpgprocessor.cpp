@@ -67,6 +67,7 @@ QVPGProcessor::QVPGProcessor(QObject *parent) : QObject(parent),
     faceproc(NULL),
     pulseproc(NULL),
     peakdet(NULL),
+    hrvproc(NULL),
     initialized(false)
 {
     qRegisterMetaType<cv::Rect>("cv::Rect");
