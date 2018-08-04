@@ -7,4 +7,4 @@ REM TIMEOUT 1
 REM This script deletes service from system
 sc delete VPGService
 REM Take timeout
-TIMEOUT 1
+REM TIMEOUT 1

@@ -4,8 +4,8 @@ SET bp="%~dp0VPGService.exe"
 REM Create service
 sc create "VPGService" binpath= %bp% start= auto 
 REM Start service
-TIMEOUT 1
+REM TIMEOUT 1
 REM Start service
 sc start VPGService
 REM Timeout
-TIMEOUT 1
+REM TIMEOUT 1

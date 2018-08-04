@@ -65,10 +65,10 @@ void QFaceTracker::updateImage(const cv::Mat &img)
                _tp += dlib::point(_faceRrect.center.x,_faceRrect.center.y);
                _faceshape.part(i) = _tp;
            }
-           render_face_shape(frame,_faceshape);
+           //render_face_shape(frame,_faceshape);
            emit faceUpdated(img,_faceshape);
         } else {
-            qDebug("QFaceTracker::Warning - selected face align method does not produce face shape points!");
+            qDebug("QFaceTracker::Warning - selected face align method does not support face shape option!");
         }
     }
     emit frameProcessed(frame);
