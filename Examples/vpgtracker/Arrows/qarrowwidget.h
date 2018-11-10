@@ -8,22 +8,26 @@
 
 struct ArrowProps {
     enum ArrowDirection {Unknown,Left,Up,Right,Down};
+    enum ArrowPosition {PosTopLeft, PosTop, PosTopRight, PosRight, PosBottomRight, PosBottom, PosBottomLeft, PosLeft, PosCenter};
 
-    ArrowProps(const QColor &_arrowcolor=Qt::white, const QColor &_backgroundcolor=Qt::gray, ArrowDirection _arrowdirection=Unknown):
+    ArrowProps(const QColor &_arrowcolor=Qt::white, const QColor &_backgroundcolor=Qt::gray, ArrowDirection _arrowdirection=Unknown, ArrowPosition _arrowposition=PosCenter):
         arrowcolor(_arrowcolor),
         backgroundcolor(_backgroundcolor),
-        arrowdirection(_arrowdirection) {}
+        arrowdirection(_arrowdirection),
+        arrowposition(_arrowposition) {}
 
     ArrowProps(const ArrowProps &val) :
         arrowcolor(val.arrowcolor),
         backgroundcolor(val.backgroundcolor),
-        arrowdirection(val.arrowdirection) {}
+        arrowdirection(val.arrowdirection),
+        arrowposition(val.arrowposition) {}
 
     ArrowProps& operator=(const ArrowProps &val)
     {
         arrowcolor = val.arrowcolor;
         backgroundcolor = val.backgroundcolor;
         arrowdirection = val.arrowdirection;
+        arrowposition = val.arrowposition;
         return *this;
     }
 
@@ -31,13 +35,15 @@ struct ArrowProps {
     ArrowProps(ArrowProps &&val) :
         arrowcolor(qMove(val.arrowcolor)),
         backgroundcolor(qMove(val.backgroundcolor)),
-        arrowdirection(val.arrowdirection) {}
+        arrowdirection(val.arrowdirection),
+        arrowposition(val.arrowposition) {}
 
     ArrowProps& operator=(ArrowProps &&val)
     {
         arrowcolor = qMove(val.arrowcolor);
         backgroundcolor = qMove(val.backgroundcolor);
         arrowdirection = val.arrowdirection;
+        arrowposition = val.arrowposition;
         return *this;
     }
 
@@ -70,9 +76,31 @@ struct ArrowProps {
         }
     }
 
+    static ArrowPosition str2position(const QString &_str)
+    {
+        if(_str == "7")
+            return PosTopLeft;
+        if(_str == "8")
+            return  PosTop;
+        if(_str == "9")
+            return PosTopRight;
+        if(_str == "6")
+            return PosRight;
+        if(_str == "3")
+            return PosBottomRight;
+        if(_str == "2")
+            return PosBottom;
+        if(_str == "1")
+            return PosBottomLeft;
+        if(_str == "4")
+            return PosLeft;
+        return PosCenter;
+    }
+
     QColor arrowcolor;
     QColor backgroundcolor;
     ArrowDirection arrowdirection;
+    ArrowPosition arrowposition;
 };
 
 class QArrowWidget : public QWidget

@@ -38,6 +38,7 @@ void MainWindow::parseTaskfile(const QString &_filename)
         _arrow.backgroundcolor = QColor(_strline.section(',',0,0).simplified());
         _arrow.arrowcolor = QColor(_strline.section(',',1,1).simplified());
         _arrow.arrowdirection = ArrowProps::str2direction(_strline.section(',',2,2).simplified());
+        _arrow.arrowposition = ArrowProps::str2position(_strline.section(',',3,3).simplified());
         varrowprops.push_back(qMove(_arrow));
         _line = _ifile.readLine();
     }

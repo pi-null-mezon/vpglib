@@ -31,7 +31,7 @@ void QArrowWidget::paintEvent(QPaintEvent *)
         _font.setPointSizeF(_font.pointSizeF()*std::sqrt(rect().height()*rect().height() + rect().width()*rect().width())/250.0);
         _painter.setFont(_font);
         _painter.setPen(QColor(255,255,255,100));
-        _painter.drawText(rect(),Qt::AlignCenter,tr("Press spacebar to start session"));
+        _painter.drawText(rect(),Qt::AlignCenter,tr("Нажмите на пробел чтобы начать"));
     }
 }
 
@@ -42,7 +42,37 @@ void QArrowWidget::__drawArrow(QPainter &_painter)
     _painter.setBrush(arrow.arrowcolor);
 
     _painter.save();
-    _painter.translate(rect().center());
+
+    switch(arrow.arrowposition) {
+        case ArrowProps::PosCenter:
+            _painter.translate(rect().center());
+            break;
+        case ArrowProps::PosTopLeft:
+            _painter.translate(rect().center().x()/3.0,rect().center().y()/2.0);
+            break;
+        case ArrowProps::PosTop:
+            _painter.translate(rect().center().x(),rect().center().y()/2.0);
+            break;
+        case ArrowProps::PosTopRight:
+            _painter.translate(rect().center().x()*5.0/3.0,rect().center().y()/2);
+            break;
+        case ArrowProps::PosRight:
+            _painter.translate(rect().center().x()*5.0/3.0,rect().center().y());
+            break;
+        case ArrowProps::PosBottomRight:
+            _painter.translate(rect().center().x()*5.0/3.0,rect().center().y()*3.0/2.0);
+            break;
+        case ArrowProps::PosBottom:
+            _painter.translate(rect().center().x(),rect().center().y()*3.0/2.0);
+            break;
+        case ArrowProps::PosBottomLeft:
+            _painter.translate(rect().center().x()/3.0,rect().center().y()*3.0/2.0);
+            break;
+        case ArrowProps::PosLeft:
+            _painter.translate(rect().center().x()/3.0,rect().center().y());
+            break;
+    }
+
     qreal _scale = std::sqrt(rect().height()*rect().height() + rect().width()*rect().width())/250.0;
     _painter.scale(_scale,_scale);
     switch(arrow.arrowdirection) {
