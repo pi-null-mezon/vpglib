@@ -77,41 +77,44 @@ PulseProcessor::~PulseProcessor()
     delete[] v_FA;
 }
 
-void PulseProcessor::update(double value, double time)
+void PulseProcessor::update(double value, double time, bool filter)
 {
-    v_raw[curpos] = value;
-    if(std::abs(time - m_dTms) < m_dTms) {
-        v_time[curpos] = time;
+    if(filter) {
+        v_raw[curpos] = value;
+        if(std::abs(time - m_dTms) < m_dTms) {
+            v_time[curpos] = time;
+        } else {
+            v_time[curpos] = m_dTms;
+        }
+
+        double mean = 0.0;
+        double sko = 0.0;
+
+        for(int i = 0; i < m_interval; i++) {
+            mean += v_raw[__loop(curpos - i)];
+        }
+        mean /= m_interval;
+        int pos = 0;
+        for(int i = 0; i < m_interval; i++) {
+            pos = __loop(curpos - i);
+            sko += (v_raw[pos] - mean)*(v_raw[pos] - mean);
+        }
+        sko = std::sqrt( sko/(m_interval - 1));
+        if(sko < 0.01) {
+            sko = 1.0;
+        }
+        v_X[__seek(curpos)] = (v_raw[curpos] - mean)/ sko;
+
+        double integral = 0.0;
+        for(int i = 0; i < m_filterlength; i++) {
+            integral += v_X[i];
+        }
+
+        v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (m_filterlength + 1.0);
     } else {
-        v_time[curpos] = m_dTms;
+        v_Y[curpos] = value;
+        v_time[curpos] = time;
     }
-
-    double mean = 0.0;
-    double sko = 0.0;
-
-    for(int i = 0; i < m_interval; i++) {
-        mean += v_raw[__loop(curpos - i)];
-    }
-    mean /= m_interval;
-    int pos = 0;
-    for(int i = 0; i < m_interval; i++) {
-        pos = __loop(curpos - i);
-        sko += (v_raw[pos] - mean)*(v_raw[pos] - mean);
-    }
-    sko = std::sqrt( sko/(m_interval - 1));
-    if(sko < 0.01) {
-        sko = 1.0;
-    }
-    v_X[__seek(curpos)] = (v_raw[curpos] - mean)/ sko;
-
-    double integral = 0.0;
-    for(int i = 0; i < m_filterlength; i++) {
-        //integral += v_X[__seek(curpos - i)];
-        // does the same as above if we add up along whole filter length
-        integral += v_X[i];
-    }
-
-    v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (m_filterlength + 1.0);
 	
 	if(pt_peakdetector != 0)
         pt_peakdetector->update(v_Y[curpos], v_time[curpos]);

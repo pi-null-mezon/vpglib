@@ -68,12 +68,13 @@ public:
      */
     virtual ~PulseProcessor();
     /**
-     * Update ppg signal by one count
+     * Update vpg signal by one count
      * @param value - count value
      * @param time - count measurement time in millisecond
+     * @param filter - apply filtering of the input values
      * @note function should be called at each video frame
      */
-    void update(double value, double time);
+    void update(double value, double time, bool filter=true);
     /**
      * Compute heart rate
      * @return heart rate in beats per minute
