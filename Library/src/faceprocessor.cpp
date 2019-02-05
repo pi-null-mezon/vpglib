@@ -36,7 +36,7 @@ void FaceProcessor::__init()
     m_pos = 0;
     m_nofaceframes = 0;
     f_firstface = true;
-    m_minFaceSize = cv::Size(80,80);
+    m_minFaceSize = cv::Size(110,110);
 }
 
 FaceProcessor::~FaceProcessor()
@@ -71,7 +71,7 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
     }
 
     std::vector<cv::Rect> faces;
-    m_classifier.detectMultiScale(img, faces, 1.2, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize);
+    m_classifier.detectMultiScale(img, faces, 1.3, 5, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize, m_minFaceSize*4);
 
     if(faces.size() > 0) {
         __updateRects(faces[0]);
