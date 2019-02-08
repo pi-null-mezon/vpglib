@@ -18,11 +18,11 @@ SOURCES += main.cpp
 
 include($${PWD}/../../shared/vpglib.pri)
 
-CONFIG += designbuild
+#CONFIG += designbuild
 
 designbuild {
     message(Design build mode selected)
-    DEFINES += CASCADE_FILENAME=\\\"C:/Programming/3rdParties/opencv310/sources/data/haarcascades/\\\"
+    DEFINES += CASCADE_PATH=\\\"C:/Programming/3rdParties/opencv310/sources/data/haarcascades/\\\"
 } else {
     message(Deploy build mode selected)
 }

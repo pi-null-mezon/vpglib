@@ -9,23 +9,11 @@ std::string num2str(T value, unsigned char precision=1);
 void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color);
 
 int main(int argc, char *argv[])
-{      
-    // Try to open video capture device by Opencv's API
-    cv::VideoCapture capture;
-    if(argc > 1) {
-        if(capture.open(argv[1]) == false) {
-            std::cerr << "Can not open video file " << argv[1] << " Abort...";
-            return -1;
-        }
-    } else if(capture.open(0) == false) {
-        std::cerr << "Can not open video capture device. Abort...";
-        return -2;
-    }
-
-    // Create FaceProcessor instance
+{          
+    // Create FaceProcessor instance (it is needed to detect face and compute average skin reflection)
     cv::String facecascadefilename;
-    #ifdef CASCADE_FILENAME
-        facecascadefilename = cv::String(CASCADE_FILENAME) + "haarcascade_frontalface_alt2.xml";
+    #ifdef CASCADE_PATH
+        facecascadefilename = cv::String(CASCADE_PATH) + "haarcascade_frontalface_alt2.xml";
     #else
         facecascadefilename = "haarcascade_frontalface_alt2.xml";
     #endif
@@ -35,12 +23,28 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    std::cout << "Measure frame period... " << std::endl;
-    double framePeriod = faceproc.measureFramePeriod(&capture); // ms
-    std::cout << framePeriod << " ms" << std::endl;
-    vpg::PulseProcessor pulseproc(framePeriod); // note it is convinirnt to use default constructor only if frame period is near to 33 ms
+    // Try to open default video capture device by Opencv's API
+    cv::VideoCapture capture;
+    if(argc > 1) {
+        // Note that, video files that use compression codecs (like MPEG etc.) do not contain skin reflection changes
+        if(capture.open(argv[1]) == false) {
+            std::cerr << "Can not open video file " << argv[1] << " Abort...";
+            return 1;
+        }
+    } else if(capture.open(0) == false) {
+        std::cerr << "Can not open video capture device. Abort...";
+        return 2;
+    }
 
-    // Add peak detector for the cardio intervals evaluation and analysis
+    // Now we should measure frame rate of the video
+    std::cout << "Measuring actual frame period. Please wait... " << std::endl;
+    double framePeriod = faceproc.measureFramePeriod(&capture); // ms
+    std::cout << "  frame period: " << framePeriod << " ms" << std::endl;
+
+    // Let's create instance of PulseProcessor (it analyzes counts of skin reflection and computes heart rate by means on FFT analysis)
+    vpg::PulseProcessor pulseproc(framePeriod);
+
+    // Add peak detector for the cardio intervals evaluation and analysis (it analyzes cardio intervals)
     int totalcardiointervals = 25;
     vpg::PeakDetector peakdetector(pulseproc.getLength(), totalcardiointervals, 11, framePeriod);
     pulseproc.setPeakDetector(&peakdetector);
@@ -52,7 +56,7 @@ int main(int argc, char *argv[])
     cv::Mat frame;
     unsigned int k = 0;
     double s = 0.0, t = 0.0, _snr = 0.0;
-    int _hr = pulseproc.getFrequency();
+    int _hr = (int)pulseproc.getFrequency();
 
     const double *signal = pulseproc.getSignal();
     int length = pulseproc.getLength();
@@ -96,28 +100,27 @@ int main(int argc, char *argv[])
                 cv::putText(frame, _cardiointerval, cv::Point(20,140), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
                 cv::putText(frame, _cardiointerval, cv::Point(19,139), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(127,0,127), 1, CV_AA);
 
-
                 // Draw cardio intervals history
                 float xorigin = 10.0;
-                float yorigin = frame.rows;
-                float xstep = (float)(frame.cols - xorigin*2.0f) / (cardiointervalslength - 1);
-                float ystep = (float)(frame.rows) / 4000.0f;
+                float yorigin = (float)frame.rows;
+                float xstep = (frame.cols - xorigin*2.0f) / (cardiointervalslength - 1);
+                float ystep = frame.rows / 4000.0f;
                 for(int i = 0; i < cardiointervalslength-1; i++) {
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - cardiointervals[(i+1)]*ystep),cv::Scalar(127,0,127),1,CV_AA);
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin), cv::Point(xorigin + i*xstep, yorigin - cardiointervals[i]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                    cv::line(frame, cv::Point2f(xorigin + i*xstep, yorigin - (float)cardiointervals[i]*ystep), cv::Point2f(xorigin + (i+1)*xstep, yorigin - (float)cardiointervals[(i+1)]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                    cv::line(frame, cv::Point2f(xorigin + i*xstep, yorigin), cv::Point2f(xorigin + i*xstep, yorigin - (float)cardiointervals[i]*ystep),cv::Scalar(127,0,127),1,CV_AA);
                 }
-                cv::line(frame, cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin), cv::Point(xorigin + (cardiointervalslength-1)*xstep, yorigin - cardiointervals[cardiointervalslength-1]*ystep),cv::Scalar(127,0,127),1,CV_AA);
+                cv::line(frame, cv::Point2f(xorigin + (cardiointervalslength-1)*xstep, yorigin), cv::Point2f(xorigin + (cardiointervalslength-1)*xstep, yorigin - (float)cardiointervals[cardiointervalslength-1]*ystep),cv::Scalar(127,0,127),1,CV_AA);
 
                 // Draw ppg-signal
                 xstep = (float)(frame.cols - xorigin*2.0f) / (length - 1);
                 ystep *= 100.0;
                 yorigin = (frame.rows) * 0.9f;
                 for(int i = 0; i < length-1; i++)
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - signal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - signal[(i+1)]*ystep),cv::Scalar(0,200,0),1,CV_AA);
+                    cv::line(frame, cv::Point2f(xorigin + i*xstep, yorigin - (float)signal[i]*ystep), cv::Point2f(xorigin + (i+1)*xstep, yorigin - (float)signal[(i+1)]*ystep),cv::Scalar(0,200,0),1,CV_AA);
 
                 // Draw binary-signal from PeakDetector
                 for(int i = 0; i < length-1; i++)
-                    cv::line(frame, cv::Point(xorigin + i*xstep, yorigin - binarysignal[i]*ystep), cv::Point(xorigin + (i+1)*xstep, yorigin - binarysignal[(i+1)]*ystep),cv::Scalar(0,0,255),1,CV_AA);
+                    cv::line(frame, cv::Point2f(xorigin + i*xstep, yorigin - (float)binarysignal[i]*ystep), cv::Point2f(xorigin + (i+1)*xstep, yorigin - (float)binarysignal[(i+1)]*ystep),cv::Scalar(0,0,255),1,CV_AA);
 
                 // Draw frame time
                 cv::String _periodstr = num2str(t) + " ms, press 's' to open capture device settings dialog";
@@ -183,23 +186,23 @@ void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const 
         cv::rectangle(_colorplot,cv::Rect(0,0,_colorplot.cols,_colorplot.rows),cv::Scalar(15,15,15), -1);
 
         int _ticksX = 10;
-        double _tickstepX = static_cast<double>(_windowsize.width)/ _ticksX ;
+        float _tickstepX = static_cast<float>(_windowsize.width)/ _ticksX ;
         for(int i = 1; i < _ticksX ; i++)
-            cv::line(_colorplot, cv::Point2f(i*_tickstepX,0), cv::Point2f(i*_tickstepX,_colorplot.rows), cv::Scalar(100,100,100), 1);
+            cv::line(_colorplot, cv::Point2f(i*_tickstepX,0), cv::Point2f(i*_tickstepX,static_cast<float>(_colorplot.rows)), cv::Scalar(100,100,100), 1);
 
         int _ticksY = 8;
-        double _tickstepY = static_cast<double>(_windowsize.height)/ _ticksY ;
+        float _tickstepY = static_cast<float>(_windowsize.height)/ _ticksY ;
         for(int i = 1; i < _ticksY ; i++) {
-            cv::line(_colorplot, cv::Point2f(0,i*_tickstepY), cv::Point2f(_colorplot.cols,i*_tickstepY), cv::Scalar(100,100,100), 1);
-            cv::putText(_colorplot, num2str(_ymax - i * (_ymax-_ymin)/_ticksY), cv::Point(5, i*_tickstepY - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(150,150,150), 1, CV_AA);
+            cv::line(_colorplot, cv::Point2f(0,i*_tickstepY), cv::Point2f(static_cast<float>(_colorplot.cols),i*_tickstepY), cv::Scalar(100,100,100), 1);
+            cv::putText(_colorplot, num2str(_ymax - i * (_ymax-_ymin)/_ticksY), cv::Point2f(5, i*_tickstepY - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(150,150,150), 1, CV_AA);
         }
 
-        double invstepY = (_ymax - _ymin) / _windowsize.height;
-        double stepX = static_cast<double>(_windowsize.width) / (_datalength - 1);
+        float invstepY = static_cast<float>(_ymax - _ymin) / _windowsize.height;
+        float stepX = static_cast<float>(_windowsize.width) / (_datalength - 1);
 
         for(int i = 0; i < _datalength - 1; i++) {
-            cv::line(_colorplot, cv::Point2f(i*stepX, _windowsize.height - (_data[i] - _ymin)/invstepY),
-                                 cv::Point2f((i+1)*stepX, _windowsize.height - (_data[i+1] - _ymin)/invstepY),
+            cv::line(_colorplot, cv::Point2f(i*stepX, _windowsize.height - static_cast<float>(_data[i] - _ymin)/invstepY),
+                                 cv::Point2f((i+1)*stepX, _windowsize.height - static_cast<float>(_data[i+1] - _ymin)/invstepY),
                                  _color, 1, CV_AA);
         }
         cv::imshow(_title, _colorplot);
