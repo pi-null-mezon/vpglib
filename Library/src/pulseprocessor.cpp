@@ -66,6 +66,7 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double
     v_dftmat = cv::Mat(1, m_length, CV_64F);
 
     curpos = 0;
+    m_snr  = 0;
 }
 
 PulseProcessor::~PulseProcessor()

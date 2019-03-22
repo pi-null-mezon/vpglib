@@ -111,7 +111,7 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
                 tB = ptr[3*i];
                 tG = ptr[3*i+1];
                 tR = ptr[3*i+2];
-                if( __skinColor(tR, tG, tB) && __insideEllipse(i, j)) {
+                if( /*__skinColor(tR, tG, tB) &&*/ __insideEllipse(i, j)) {
                     area++;
                     green += tG;
                 }
@@ -150,7 +150,7 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, dou
                 tB = ptr[3*i];
                 tG = ptr[3*i+1];
                 tR = ptr[3*i+2];
-                if( __skinColor(tR, tG, tB)) {
+                if( /*__skinColor(tR, tG, tB)*/ true) {
                     area++;
                     red   += tR;
                     green += tG;

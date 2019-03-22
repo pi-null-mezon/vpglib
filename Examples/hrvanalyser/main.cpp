@@ -11,15 +11,10 @@ void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const 
 int main(int argc, char *argv[])
 {          
     // Create FaceProcessor instance (it is needed to detect face and compute average skin reflection)
-    cv::String facecascadefilename;
-    #ifdef CASCADE_PATH
-        facecascadefilename = cv::String(CASCADE_PATH) + "haarcascade_frontalface_alt2.xml";
-    #else
-        facecascadefilename = "haarcascade_frontalface_alt2.xml";
-    #endif
+    cv::String facecascadefilename = "haarcascade_frontalface_alt2.xml";
     vpg::FaceProcessor faceproc(facecascadefilename);
     if(faceproc.empty()) {
-        std::cout << "Could not load cascade classifier! Abort...\n";
+        std::cout << "Could not load '" << facecascadefilename << "'! Abort...\n";
         return -1;
     }
 
