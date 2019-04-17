@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(BeatMagnifier)
+project(vpglib)
 
 FIND_PACKAGE(OpenCV 4.0 REQUIRED)
 
