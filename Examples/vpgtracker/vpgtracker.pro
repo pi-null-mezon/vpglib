@@ -20,6 +20,9 @@ SOURCES += main.cpp \
 
 HEADERS += facetracker.h
 
-include($${PWD}/dlib.pri)
-include($${PWD}/opencv.pri)
+include($${PWD}/../../Shared/dlib.pri) 
 include($${PWD}/../../Shared/vpglib.pri)
+
+linux {
+	DEFINES += TARGET_OS_LINUX
+}
