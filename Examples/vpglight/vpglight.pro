@@ -25,10 +25,13 @@ include($${PWD}/../../Shared/vpglib.pri)
 CONFIG += designbuild
 
 designbuild {
-    message(Design build mode selected)
+    message(Haarcascades will be searched in OPENCV_DATA_DIR)
     DEFINES += DESIGNBUILD
 } else {
-    message(Deploy build mode selected)
+    message(Note, it is you responsibility to provide haarcascades to app)
     DEFINES += DEPLOYBUILD
 }
 
+linux {
+	DEFINES += TARGET_OS_LINUX
+}

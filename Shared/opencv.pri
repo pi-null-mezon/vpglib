@@ -47,9 +47,8 @@ win32 {
 }
 
 linux {
-    DEFINES += OPENCV_DATA_DIR=\\\"/home/pi/Programming/3rdParties/opencv310/sources/data\\\"
-    LIBS += -L/usr/local/lib
-    LIBS += -L/usr/local/bin
+    DEFINES += OPENCV_DATA_DIR=\\\"$${PWD}/../../3rdParties/opencv/data\\\"
+
     LIBS += -lopencv_core \
             -lopencv_objdetect \
             -lopencv_highgui \
@@ -57,3 +56,4 @@ linux {
             -lopencv_videoio \
             -lopencv_imgcodecs
 }
+
