@@ -16,5 +16,9 @@ TEMPLATE = app
 
 SOURCES += main.cpp
 
-include($${PWD}/../../shared/vpglib.pri)
+include($${PWD}/../../Shared/vpglib.pri)
+
+linux {
+	DEFINES += TARGET_OS_LINUX
+}
 
