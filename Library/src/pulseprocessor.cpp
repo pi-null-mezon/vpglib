@@ -82,7 +82,7 @@ void PulseProcessor::update(double value, double time, bool filter)
 {
     if(filter) {
         v_raw[curpos] = value;
-        if(std::abs(time - m_dTms) < m_dTms) {
+        if(std::abs(time - m_dTms) < (m_dTms/10.0)) {
             v_time[curpos] = time;
         } else {
             v_time[curpos] = m_dTms;
