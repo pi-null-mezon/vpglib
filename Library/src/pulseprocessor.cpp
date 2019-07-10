@@ -67,6 +67,7 @@ void PulseProcessor::__init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double
 
     curpos = 0;
     m_snr  = 0;
+    m_stdev = 0;
 }
 
 PulseProcessor::~PulseProcessor()
@@ -101,6 +102,7 @@ void PulseProcessor::update(double value, double time, bool filter)
             sko += (v_raw[pos] - mean)*(v_raw[pos] - mean);
         }
         sko = std::sqrt( sko/(m_interval - 1));
+        m_stdev = sko;
         if(sko < 0.01) {
             sko = 1.0;
         }
@@ -222,6 +224,11 @@ double PulseProcessor::getSNR() const
 double PulseProcessor::getSignalSampleValue() const
 {
     return v_Y[__loop(curpos-1)];
+}
+
+double PulseProcessor::getSignalStdev() const
+{
+    return m_stdev;
 }
 
 void PulseProcessor::setPeakDetector(PeakDetector *pointer)

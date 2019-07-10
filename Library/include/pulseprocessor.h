@@ -111,6 +111,11 @@ public:
      */
     double getSignalSampleValue() const;
     /**
+     * @brief use this function to get raw signal's stdev
+     * @return standard deviation of the raw signal
+     */
+    double getSignalStdev() const;
+    /**
      * @brief setPeakDetector - set up particular peak detector that will be updated within processing pipeline
      * @param pointer - self explained
      */
@@ -136,6 +141,7 @@ private:
     double m_snr;
     double m_Frequency;
     double m_dTms;
+    double m_stdev;
 
     cv::Mat v_datamat;
     cv::Mat v_dftmat;
