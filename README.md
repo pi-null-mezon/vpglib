@@ -42,10 +42,8 @@ int main()
             }
             // increment counter
             k++;
-            // enroll user input
-            int c = cv::waitKey(1);
-            // exit if user press 'escape'
-            if( (char)c == '27' )
+            // exit if user pressed 'escape'
+            if( cv::waitKey(1) == 27 )
                 break;
         }
     }
