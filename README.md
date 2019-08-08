@@ -32,9 +32,9 @@ int main()
                 // update vpg-signal if face tracked
                 if(faceproc.getFaceRect().area() > 0) {
                     pulseproc.update(s,t);
-                    // draw rect for tarcked face
+                    // draw rect for tracked face
                     cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(127,255,127),1,CV_AA);
-                    // periodically compute and heart rate estimation
+                    // periodically compute heart rate estimation
                     if(k % 64 == 0)
                         printf("\nHR measurement: %.0f bpm", pulseproc.computeFrequency());
                 }
