@@ -16,7 +16,7 @@ int main()
     // open default video capture device
     if(capture.open(0)) {
         // CASCADE_FILENAME is a path to haarcascade or lbpcascade file for the face detection
-        vpg::FaceProcessor faceproc("C:/Programming/3rdParties/opencv330/build/etc/haarcascades/haarcascade_frontalface_alt2.xml");
+        vpg::FaceProcessor faceproc(CASCADE_FILENAME);
         // measure discretization period of the video
         double framePeriod = faceproc.measureFramePeriod(&capture);
         printf("measured frame period: %.2f ms",framePeriod);
