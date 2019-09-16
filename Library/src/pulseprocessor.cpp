@@ -107,7 +107,7 @@ void PulseProcessor::update(float value, float time, bool filter)
         for(int i = 0; i < m_filterlength; i++)
             integral += v_X[i];
 
-        v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (m_filterlength + 1.0);
+        v_Y[curpos] = ( integral + v_Y[__loop(curpos - 1)] )  / (m_filterlength + 1.0f);
     } else {
         v_Y[curpos] = value;
         v_time[curpos] = time;
@@ -153,8 +153,8 @@ float PulseProcessor::computeFrequency()
     for(int i = 0; i < m_length; i++)
         time += v_time[i];
 
-    int bottom = m_bottomFrequencyLimit * time / 1000.0f;
-    int top = m_topFrequencyLimit * time / 1000.0f;
+    int bottom = static_cast<int>(m_bottomFrequencyLimit * time / 1000.0f);
+    int top = static_cast<int>(m_topFrequencyLimit * time / 1000.0f);
     if(top > m_length/2)
         top = m_length/2;
     int i_maxpower = 0;
@@ -184,7 +184,7 @@ float PulseProcessor::computeFrequency()
         m_snr *= (1.0f / (1.0f + bias*bias));
     }
     if(m_snr > 2.5f)
-        m_Frequency = (signal_moment / signal_power) * 60000.0 / time;
+        m_Frequency = (signal_moment / signal_power) * 60000.0f / time;
 
     return m_Frequency;
 }

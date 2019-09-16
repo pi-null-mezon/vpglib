@@ -40,7 +40,7 @@ void PeakDetector::update(float value, float time)
     v_T[curposforsignal] = time;
 
     // Evaluate derivative with smooth
-    v_DS[curposforsignal] = ( (v_S[curposforsignal] - v_S[__loop(curposforsignal-1)]) + v_DS[__loop(curposforsignal-1)] ) / 2.0;
+    v_DS[curposforsignal] = ( (v_S[curposforsignal] - v_S[__loop(curposforsignal-1)]) + v_DS[__loop(curposforsignal-1)] ) / 2.0f;
 
     // Check if derivative has crossed zero, 4 counts is used for noise protection
     if(v_DS[curposforsignal] > 0.0 && v_DS[__loop(curposforsignal-1)] > 0.0 && v_DS[__loop(curposforsignal-3)] < 0.0 && v_DS[__loop(curposforsignal-4)] < 0.0) {
@@ -119,7 +119,7 @@ float PeakDetector::computeBSI()
         if(std::abs(_vci[i] - _median) < 25.0) // 25 millisecond is a half width of a CI histogram blob
             _blobsize++;           
     auto _minmax = std::minmax_element(_vci.begin(),_vci.end());
-    return (100.0f*_blobsize / _vci.size()) / ((2.0f * _median * (*_minmax.second - *_minmax.first))/1.0E6);
+    return (100.0f*_blobsize / _vci.size()) / ((2.0f * _median * (*_minmax.second - *_minmax.first))/1.0E6f);
 }
 
 void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms)

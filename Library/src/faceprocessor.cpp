@@ -53,20 +53,20 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, float &resV, float &res
     if(rgbImage.cols > 640 || rgbImage.rows > 480) {
         if( ((float)rgbImage.cols/rgbImage.rows) > 14.0/9.0 ) {
             cv::resize(rgbImage, img, cv::Size(640, 360), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (float)rgbImage.cols / 640.0;
-            scaleY = (float)rgbImage.rows / 360.0;
+            scaleX = (float)rgbImage.cols / 640.0f;
+            scaleY = (float)rgbImage.rows / 360.0f;
         } else if ( ((float)rgbImage.cols/rgbImage.rows) > 1.0) {
             cv::resize(rgbImage, img, cv::Size(640, 480), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (float)rgbImage.cols / 640.0;
-            scaleY = (float)rgbImage.rows / 480.0;
+            scaleX = (float)rgbImage.cols / 640.0f;
+            scaleY = (float)rgbImage.rows / 480.0f;
         } else if ( ((float)rgbImage.rows/rgbImage.cols) > 14.0/9.0) {
             cv::resize(rgbImage, img, cv::Size(360, 640), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (float)rgbImage.cols / 360.0;
-            scaleY = (float)rgbImage.rows / 640.0;
+            scaleX = (float)rgbImage.cols / 360.0f;
+            scaleY = (float)rgbImage.rows / 640.0f;
         } else {
             cv::resize(rgbImage, img, cv::Size(480, 640), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (float)rgbImage.cols / 480.0;
-            scaleY = (float)rgbImage.rows / 640.0;
+            scaleX = (float)rgbImage.cols / 480.0f;
+            scaleY = (float)rgbImage.rows / 640.0f;
         }
     } else {
         img = rgbImage;
@@ -296,7 +296,7 @@ float FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
         }
         return _timeaccum / (_iterations - _framestodrop);
     } else { // video source is a video file
-        return 1000.0f / _vcptr->get(cv::CAP_PROP_FPS);
+        return 1000.0f / static_cast<float>(_vcptr->get(cv::CAP_PROP_FPS));
     }
 }
 
