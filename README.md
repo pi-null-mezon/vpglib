@@ -18,13 +18,13 @@ int main()
         // CASCADE_FILENAME is a path to haarcascade or lbpcascade file for the face detection
         vpg::FaceProcessor faceproc(CASCADE_FILENAME);
         // measure discretization period of the video
-        double framePeriod = faceproc.measureFramePeriod(&capture);
+        float framePeriod = faceproc.measureFramePeriod(&capture);
         printf("measured frame period: %.2f ms",framePeriod);
         // create object that performs harmonic analysis of vpg-signal
         vpg::PulseProcessor pulseproc(framePeriod);
         cv::Mat frame;
         unsigned int k = 0; // frame counter
-        double s = 0.0, t = 0.0; // 's' for vpg-signal count, 't' for actual frame time
+        float s = 0.0, t = 0.0; // 's' for vpg-signal count, 't' for actual frame time
         while(true) {
             if(capture.read(frame)) {
                 // perform frame enrollment
