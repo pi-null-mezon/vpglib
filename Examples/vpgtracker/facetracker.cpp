@@ -10,7 +10,7 @@ FaceTracker::FaceTracker(uchar length, AlignMethod method) :
     m_pos(0),
     m_angle(0.0),    
     m_method(method),    
-    m_minNeighbours(7),
+    m_minNeighbours(5),
     m_xPortion(1.0f),
     m_yPortion(1.0f),
     m_xShift(0.0f),
@@ -18,7 +18,7 @@ FaceTracker::FaceTracker(uchar length, AlignMethod method) :
     m_primaryfacedetectortupe(FaceTracker::ViolaJones)
 {
     v_rectHistory = new cv::Rect[m_historyLength];
-    setMinFaceSize(cv::Size(80,80));
+    setMinFaceSize(cv::Size(110,110));
     clearMetaData();
     resetHistory();
     v_metaID.resize(2);
@@ -80,7 +80,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
             // (less than 30 ms per frame) on my work Toshiba laptop (with AMD discrete GPU),
             // but on my own Samsung notebook (more powerfull CPU and discrete NVidia GPU) it works
             // more than 30 ms per frame.
-            pt_faceClassifier->detectMultiScale(image.getUMat(cv::ACCESS_FAST), rects, 1.21, m_minNeighbours, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_CANNY_PRUNING | CV_HAAR_DO_ROUGH_SEARCH, m_minFaceSize, m_maxFaceSize );
+            pt_faceClassifier->detectMultiScale(image.getUMat(cv::ACCESS_FAST), rects, 1.3, m_minNeighbours, CV_HAAR_FIND_BIGGEST_OBJECT, m_minFaceSize, m_maxFaceSize );
             break;
         case FaceTracker::HOG:
             cv::Mat _tmpgraymat;

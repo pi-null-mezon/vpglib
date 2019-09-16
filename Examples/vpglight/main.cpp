@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         if(!ohrfs.is_open()) {
             std::cout << "Could not open file " << outputHRfilename
                       << " for writing. Abort...";
-            return -1;
+            return 1;
         } else {
             ohrfs << "File created by " <<  APP_NAME << " v" << APP_VERSION << std::endl;
         }
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         if(!ovpgfs.is_open()) {
             std::cout << "Could not open file " << outputVPGfilename
                       << " for writing. Abort...";
-            return -1;
+            return 2;
         } else {
             ovpgfs << "File created by " <<  APP_NAME << " v" << APP_VERSION << std::endl;
         }
@@ -95,12 +95,12 @@ int main(int argc, char *argv[])
     if(inputVideofilename) {
         if(capture.open(inputVideofilename) == false) {
             std::cout << "Could not open video file " << inputVideofilename << " Abort..." << std::endl;
-            return -1;
+            return 3;
         }
     } else {
         if(capture.open(deviceID) == false) {
             std::cout << "Could not open video device with id " << deviceID << " Abort..." << std::endl;
-            return -1;
+            return 4;
         }
     }
 
@@ -121,9 +121,9 @@ int main(int argc, char *argv[])
             std::cout << "Warning! Output videofile can not be opened!" << std::endl;
 
     cv::Mat frame;
-    double s = 0.0, t = 0.0, timeout = measInt_ms;
+    float s = 0.0, t = 0.0, timeout = measInt_ms;
     int length = pulseproc.getLength();
-    const double *vS = pulseproc.getSignal();
+    const float *vS = pulseproc.getSignal();
     cv::Point p1(0,0), p2(0,0);
     cv::Rect faceRect;
     unsigned int frequency = static_cast<unsigned int>(pulseproc.getFrequency());
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
             faceproc.enrollImage(frame, s, t);
             if(inputVideofilename) {
-                pulseproc.update(s,framePeriod); // if videofile is used as source then we should use frame period from the file
+                pulseproc.update(s,framePeriod);
             } else {
                 pulseproc.update(s,t);
             }

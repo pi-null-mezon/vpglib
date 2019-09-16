@@ -44,20 +44,20 @@ class HRVProcessor
 #endif
 {
 public:
-    HRVProcessor(double _timestepms = 250.0, bool _blur = true); // 4 Hz, seems it is convinient value
+    HRVProcessor(float _timestepms=250.0f, bool _blur = true); // 4 Hz, seems it is convinient value
 
     ~HRVProcessor();
 
-    void enrollIntervals(const double *_vIntervals, int _intervalsLength, bool _computespectrum=true);
+    void enrollIntervals(const float *_vIntervals, int _intervalsLength, bool _computespectrum=true);
 
-    const double *getHRVSignal() const;
+    const float *getHRVSignal() const;
     int getHRVSignalLength() const;
 
-    const double *getHRVAmplitudeSpectrum() const;
+    const float *getHRVAmplitudeSpectrum() const;
     int getHRVAmplitudeSpectrumLength() const;
 
-    double timestepms() const;
-    void setTimestepms(double timestepms);
+    float timestepms() const;
+    void setTimestepms(float timestepms);
 
     bool getF_smooth() const;
     void setF_smooth(bool value);
@@ -68,7 +68,7 @@ public:
      * @param _length - vector's length
      * @return index value
      */
-    double computeLF2HF();
+    float computeLF2HF();
 
 private:
     cv::Mat m_intervalsmat;
@@ -77,7 +77,7 @@ private:
     cv::Mat m_amplitudespectrum;
 
     bool f_smooth;
-    double m_timestepms;
+    float m_timestepms;
 };
 }
 //-------------------------------------------------------

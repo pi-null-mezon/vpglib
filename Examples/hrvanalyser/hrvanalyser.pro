@@ -18,7 +18,5 @@ SOURCES += main.cpp
 
 include($${PWD}/../../Shared/vpglib.pri)
 
-linux {
-	DEFINES += TARGET_OS_LINUX
-}
+linux: DEFINES += TARGET_OS_LINUX
 

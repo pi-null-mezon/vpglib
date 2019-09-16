@@ -3,7 +3,7 @@ CONFIG += c++11 console
 CONFIG -= app_bundle
 
 TARGET = vpgtracker
-VERSION = 1.0.1.0
+VERSION = 1.0.2.0
 
 DEFINES += APP_NAME=\\\"$${TARGET}\\\" \
            APP_VERSION=\\\"$${VERSION}\\\" \
@@ -23,6 +23,4 @@ HEADERS += facetracker.h
 include($${PWD}/../../Shared/dlib.pri) 
 include($${PWD}/../../Shared/vpglib.pri)
 
-linux {
-	DEFINES += TARGET_OS_LINUX
-}
+linux: DEFINES += TARGET_OS_LINUX

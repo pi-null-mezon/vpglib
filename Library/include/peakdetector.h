@@ -42,18 +42,18 @@ class PeakDetector
 #endif
 {
 public:
-    PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume = 11, double _dT_ms = 33.0);
+    PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume = 11, float _dT_ms = 33.0);
     ~PeakDetector();
 
-    void update(double value, double time);
+    void update(float value, float time);
 
-    const double *getBinarySignal() const;
+    const float *getBinarySignal() const;
     int getSignalLength() const;
 
-    const double *getIntervalsVector() const;
+    const float *getIntervalsVector() const;
     int getIntervalsLength() const;
 
-    double getCurrentInterval() const;
+    float getCurrentInterval() const;
     int getIntervalsPosition() const;
 
     /**
@@ -61,7 +61,7 @@ public:
      * @param _n - how many intervals should be counted (if n < 0 than full length of the v_Intervals should be counted)
      * @return average value of the cardiointerval
      */
-    double averageCardiointervalms(int _n=9) const;
+    float averageCardiointervalms(int _n=9) const;
 
     /**
      * @brief compute Bayevsky's Stress Index
@@ -69,26 +69,26 @@ public:
      * @param _length - vector's length
      * @return index value
      */
-    double computeBSI();
+    float computeBSI();
 
 private:
-    void __init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms);
-    void __updateInterval(double _duration);
+    void __init(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms);
+    void __updateInterval(float _duration);
     // For the signal loop array
     int __loop(int d) const;
     // For the intervals loop array
     int __seek(int d) const;
-    double __getDuration(int start, int stop);
+    float __getDuration(int start, int stop);
 
     int curposforsignal;
     int curposforinterval;
     int m_intervalssubsetvolume;
     int lastfrontposition;
-    double *v_S;
-    double* v_BS;
-    double *v_T;
-    double *v_DS;
-    double *v_Intervals;
+    float *v_S;
+    float *v_BS;
+    float *v_T;
+    float *v_DS;
+    float *v_Intervals;
     int m_signallength;
     int m_intervalslength;
 };

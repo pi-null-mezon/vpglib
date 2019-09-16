@@ -6,7 +6,7 @@
 template <typename T>
 std::string num2str(T value, unsigned char precision=1);
 
-void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color);
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const float *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color);
 
 int main(int argc, char *argv[])
 {          
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
     // Now we should measure frame rate of the video
     std::cout << "Measuring actual frame period. Please wait... " << std::endl;
-    double framePeriod = faceproc.measureFramePeriod(&capture); // ms
+    float framePeriod = faceproc.measureFramePeriod(&capture); // ms
     std::cout << "  frame period: " << framePeriod << " ms" << std::endl;
 
     // Let's create instance of PulseProcessor (it analyzes counts of skin reflection and computes heart rate by means on FFT analysis)
@@ -50,15 +50,15 @@ int main(int argc, char *argv[])
     // Create local variables to store frame and processing values
     cv::Mat frame;
     unsigned int k = 0;
-    double s = 0.0, t = 0.0, _snr = 0.0;
+    float s = 0.0, t = 0.0, _snr = 0.0;
     int _hr = (int)pulseproc.getFrequency();
 
-    const double *signal = pulseproc.getSignal();
+    const float *signal = pulseproc.getSignal();
     int length = pulseproc.getLength();
 
-    const double *cardiointervals = peakdetector.getIntervalsVector();
+    const float *cardiointervals = peakdetector.getIntervalsVector();
     int cardiointervalslength = peakdetector.getIntervalsLength();
-    const double *binarysignal = peakdetector.getBinarySignal();
+    const float *binarysignal = peakdetector.getBinarySignal();
 
     std::cout << "Press escape to exit..." << std::endl;
 
@@ -69,11 +69,10 @@ int main(int argc, char *argv[])
 
             // Essential part for the PPG signal extraction, only 2 strings should be called for the each new frame
             faceproc.enrollImage(frame, s, t);
-            if(argc > 1) {
-                pulseproc.update(s,framePeriod);
-            } else {
+            if(argc > 1)
+                pulseproc.update(s,framePeriod); // video file have fixed frame time
+            else
                 pulseproc.update(s,t);
-            }
 
             faceRect = faceproc.getFaceRect();
             if(faceRect.area() > 0) {
@@ -173,7 +172,7 @@ std::string num2str(T value, unsigned char precision)
     return std::string(_fullstring.begin(), _fullstring.begin() + _n);
 }
 
-void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const double *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color)
+void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const float *_data, const int _datalength, double _ymax, double _ymin, cv::Scalar _color)
 {
     if(_datalength > 0 && _windowsize.area() > 0 && _data != NULL ) {
 

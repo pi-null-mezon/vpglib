@@ -19,7 +19,7 @@
 
 namespace vpg {
 
-HRVProcessor::HRVProcessor(double _timestepms, bool _blur)
+HRVProcessor::HRVProcessor(float _timestepms, bool _blur)
 {
     setTimestepms(_timestepms);
     setF_smooth(_blur);
@@ -29,21 +29,21 @@ HRVProcessor::~HRVProcessor()
 {
 }
 
-void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLength, bool _computespectrum)
+void HRVProcessor::enrollIntervals(const float *_vIntervals, int _intervalsLength, bool _computespectrum)
 {
     // Let's determine how many of counts do we really need
-    double _totalduration = 0.0;
+    float _totalduration = 0.0f;
     for(int i = 0; i < _intervalsLength - 1; i++) // -1 guaranties this (1)
         _totalduration += _vIntervals[i];
 
     const int _counts = static_cast<int>(_totalduration / timestepms());
 
-    m_intervalsmat = cv::Mat(1, _counts, CV_64F); // this cv::Mat object will store interpolated intervals
-    double *_pointer = m_intervalsmat.ptr<double>(0);
+    m_intervalsmat = cv::Mat(1, _counts, CV_32F); // this cv::Mat object will store interpolated intervals
+    float *_pointer = m_intervalsmat.ptr<float>(0);
 
     // Make linear interpolation of the input data for uniform timestep
     int j = 0; // will count position in input data
-    double _duration = _vIntervals[0];
+    float _duration = _vIntervals[0];
 
     for(int i = 0; i < _counts; i++) {
 
@@ -66,10 +66,10 @@ void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLeng
     if(_computespectrum) {
     // Evaluate dft of the HRV signal
         cv::dft(m_intervalsmat, m_dftmat);
-        const double *_pdft = m_dftmat.ptr<const double>(0);
+        const float *_pdft = m_dftmat.ptr<const float>(0);
 
-        m_amplitudespectrum = cv::Mat(1, m_dftmat.cols/2 + 1, CV_64F);
-        double *_amp = m_amplitudespectrum.ptr<double>(0);
+        m_amplitudespectrum = cv::Mat(1, m_dftmat.cols/2 + 1, CV_32F);
+        float *_amp = m_amplitudespectrum.ptr<float>(0);
 
         // complex conjugated symmetry, read on http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#dft
         _amp[0] = 0.0; // exclude zero count which is equal to the mean value of the signal
@@ -84,22 +84,19 @@ void HRVProcessor::enrollIntervals(const double *_vIntervals, int _intervalsLeng
     }
 }
 
-double HRVProcessor::timestepms() const
+float HRVProcessor::timestepms() const
 {
     return m_timestepms;
 }
 
-void HRVProcessor::setTimestepms(double timestepms)
+void HRVProcessor::setTimestepms(float timestepms)
 {
     m_timestepms = timestepms;
 }
 
-const double *HRVProcessor::getHRVSignal() const
+const float *HRVProcessor::getHRVSignal() const
 {
-    if(m_intervalsmat.empty())
-        return NULL;
-    else
-        return m_intervalsmat.ptr<const double>(0);
+    return m_intervalsmat.ptr<const float>(0);
 }
 
 int HRVProcessor::getHRVSignalLength() const
@@ -107,12 +104,9 @@ int HRVProcessor::getHRVSignalLength() const
     return m_intervalsmat.cols;
 }
 
-const double *HRVProcessor::getHRVAmplitudeSpectrum() const
+const float *HRVProcessor::getHRVAmplitudeSpectrum() const
 {
-    if(m_amplitudespectrum.empty())
-        return NULL;
-    else
-        return m_amplitudespectrum.ptr<const double>(0);
+    return m_amplitudespectrum.ptr<const float>(0);
 }
 
 int HRVProcessor::getHRVAmplitudeSpectrumLength() const
@@ -130,22 +124,21 @@ void HRVProcessor::setF_smooth(bool value)
     f_smooth = value;
 }
 
-double HRVProcessor::computeLF2HF()
+float HRVProcessor::computeLF2HF()
 {
     if(m_intervalsmat.total() > 0) {
-        double _totaldurationms = 0.0;
-        double *_intervalms = m_intervalsmat.ptr<double>(0);
-        for(size_t i = 0; i < m_intervalsmat.total(); i++) {
+        float _totaldurationms = 0.0;
+        float *_intervalms = m_intervalsmat.ptr<float>(0);
+        for(size_t i = 0; i < m_intervalsmat.total(); i++)
             _totaldurationms += _intervalms[i];
-        }
 
-        double _freqstep = 1000.0 / _totaldurationms, _hf = 0.0, _lf = 0.0, _freq;
-        double *_amp = m_amplitudespectrum.ptr<double>(0);
+        float _freqstep = 1000.0f / _totaldurationms, _hf = 0.0, _lf = 0.0, _freq;
+        const float *_amp = m_amplitudespectrum.ptr<const float>(0);
         for(int i = 0; i <= m_dftmat.cols/2; ++i) {
             _freq = i*_freqstep;
-            if((_freq > 0.04) && (_freq <= 0.15))
+            if((_freq > 0.04f) && (_freq <= 0.15f))
                 _lf += _amp[i];
-            else if((_freq > 0.15) && (_freq <= 0.4))
+            else if((_freq > 0.15f) && (_freq <= 0.4f))
                 _hf += _amp[i];
         }
         return _lf / _hf;

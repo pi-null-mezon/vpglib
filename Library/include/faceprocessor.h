@@ -39,7 +39,6 @@
 //-------------------------------------------------------
 namespace vpg {
 	
-#define FACE_PROCESSOR_LENGTH 33
 /**
  * @brief The FaceProcessor class should be used for PPG signal counts mining from the face video
  */
@@ -72,7 +71,7 @@ public:
      * @param resT - where processing time should be written
      * @note  face detection will be performed inside the function
      */
-    void enrollImage(const cv::Mat &rgbImage, double &resV, double &resT);
+    void enrollImage(const cv::Mat &rgbImage, float &resV, float &resT);
     /**
      * Enroll image's roi rect to produce PPG-signal count
      * @param rgbImage - input image, BGR format only
@@ -82,7 +81,7 @@ public:
      * @param resT - where processing time should be written
      * @note  no face detection will be performed!
      */
-    void enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect=cv::Rect());
+    void enrollImagePart(const cv::Mat &rgbImage, float &resRed, float &resGreen, float &resBlue, float &resT, cv::Rect roirect=cv::Rect());
     /**
      * Extract average colors from 4-part face partition
      * Pratition is clockwise, starts from left part of the forehead: |3|0|
@@ -94,7 +93,7 @@ public:
      * @param resT - where processing time should be written
      * @note  no face detection will be performed! It is your responsibility to provide face image
      */
-    void enrollFace(const cv::Mat &rgbImage, double *v_resRed, double *v_resGreen, double *v_resBlue, double &resT);
+    void enrollFace(const cv::Mat &rgbImage, float *v_resRed, float *v_resGreen, float *v_resBlue, float &resT);
     /**
      * Get cv::Rect that bounds face on image
      * @return coordinates of face on image in cv::Rect form
@@ -112,7 +111,7 @@ public:
      * @return average frame time in ms (use this value to instantiate PulseProcessor instance then)
      * @note VideoCapture object should be opened else -1.0 will be returned
      */
-    double measureFramePeriod(cv::VideoCapture *_vcptr);
+    float measureFramePeriod(cv::VideoCapture *_vcptr);
     /**
      * @brief dropTimer - call to drop the internal timer
      */
