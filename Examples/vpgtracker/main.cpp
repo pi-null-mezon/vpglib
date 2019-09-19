@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         std::cout << "Could not load eye detector resources! Abort..." << std::endl;
         return 3;
     }
-    FaceTracker facetracker(11, FaceTracker::FaceShape);
+    FaceTracker facetracker(11, FaceTracker::FaceShapeOpencv);
     facetracker.setFaceClassifier(&facedet);
     facetracker.setEyeClassifier(&eyedet);
 
@@ -81,6 +81,15 @@ int main(int argc, char *argv[])
         return 5;
     }
     facetracker.setFaceShapeDetector(&dlibshapepredictor);
+
+    // Opencv face marks
+    cv::Ptr<cv::face::Facemark> facemark = cv::face::createFacemarkLBF();
+    facemark->loadModel("lbfmodel.yaml");
+    if(facemark->empty()) {
+        std::cerr << "Can not load 'lbfmodel.yaml'!" << std::endl;
+        return 6;
+    }
+    facetracker.setFaceMarker(facemark);
 
     // VPGLIB's stuff
     vpg::FaceProcessor faceproc(facecascadefilename);
@@ -211,11 +220,11 @@ int main(int argc, char *argv[])
                _hrupdateIntervalms = 0.0;
            }
            std::string _hrstr = "HR: " + std::to_string(_hr.first) + " bpm";
-           cv::putText(frame, _hrstr, cv::Point(4,20), CV_FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,CV_AA);
-           cv::putText(frame, _hrstr, cv::Point(3,19), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][0],1,CV_AA);
+           cv::putText(frame, _hrstr, cv::Point(4,20), cv::FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,cv::LINE_AA);
+           cv::putText(frame, _hrstr, cv::Point(3,19), cv::FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][0],1,cv::LINE_AA);
            _hrstr = "HR: " + std::to_string(_hr.second) + " bpm";
-           cv::putText(frame, _hrstr, cv::Point(4,45), CV_FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,CV_AA);
-           cv::putText(frame, _hrstr, cv::Point(3,44), CV_FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][1],1,CV_AA);
+           cv::putText(frame, _hrstr, cv::Point(4,45), cv::FONT_HERSHEY_SIMPLEX, 0.65, cv::Scalar(0,0,0),1,cv::LINE_AA);
+           cv::putText(frame, _hrstr, cv::Point(3,44), cv::FONT_HERSHEY_SIMPLEX, 0.65, _vvc[_colorset][1],1,cv::LINE_AA);
            drawDataWindow("VPG (normalized)", cv::Size(640,240), _vpgsignals, pulseprocfirst.getLength(), 3.0,-3.0,_vvc[_colorset]);
            //drawDataWindow("HRV", cv::Size(640,240), _vhrvsignals, peakdetfirst.getIntervalsLength(), 1100.0,300.0,_vcolors);
 
@@ -227,9 +236,10 @@ int main(int argc, char *argv[])
            /*cv::Point2f _vert[4]; // Rectangle around the face
            _faceRrect.points(_vert);
            for(unsigned char i = 0; i < 4; ++i) {
-               cv::line(frame,_vert[i], _vert[(i+1)%4],cv::Scalar(0,0,255),1,CV_AA);
+               cv::line(frame,_vert[i], _vert[(i+1)%4],cv::Scalar(0,0,255),1,cv::LINE_AA);
            }*/
-           if(facetracker.getFaceAlignMethod() == FaceTracker::FaceShape) {
+           if(facetracker.getFaceAlignMethod() == FaceTracker::FaceShapeDlib ||
+              facetracker.getFaceAlignMethod() == FaceTracker::FaceShapeOpencv) {
                ofs << pulseprocfirst.getSignalSampleValue() << ",\t" << pulseprocsecond.getSignalSampleValue();
                dlib::full_object_detection _faceshape = facetracker.getFaceShape();
                for(size_t i = 0; i < _faceshape.num_parts(); ++i) {
@@ -247,18 +257,18 @@ int main(int argc, char *argv[])
         }
 
         cv::String _periodstr = num2str(frame.cols,0) + "x" + num2str(frame.rows,0) + " " + num2str(t) + " ms";
-        cv::putText(frame, _periodstr, cv::Point(4,frame.rows-20), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-        cv::putText(frame, _periodstr, cv::Point(3,frame.rows-21), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+        cv::putText(frame, _periodstr, cv::Point(4,frame.rows-20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+        cv::putText(frame, _periodstr, cv::Point(3,frame.rows-21), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, cv::LINE_AA);
         static const cv::String _options = "options keys: s - video settings; esc - quit";
-        cv::putText(frame, _options, cv::Point(4,frame.rows-6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-        cv::putText(frame, _options, cv::Point(3,frame.rows-7), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+        cv::putText(frame, _options, cv::Point(4,frame.rows-6), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+        cv::putText(frame, _options, cv::Point(3,frame.rows-7), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, cv::LINE_AA);
         cv::imshow(APP_NAME, frame);
         int c = cv::waitKey(1);
         if( (char)c == 27 ) { // 27 is escape ASCII code
             break;
         } else switch(c) {
             case 's':
-                videocapture.set(CV_CAP_PROP_SETTINGS,0.0);
+                videocapture.set(cv::CAP_PROP_SETTINGS,0.0);
                 break;
             case 'r':
                 _colorset = 0;
@@ -268,6 +278,12 @@ int main(int argc, char *argv[])
                 break;
             case 'b':
                 _colorset = 2;
+                break;
+            case 'o':
+                facetracker.setFaceAlignMethod(FaceTracker::FaceShapeOpencv);
+                break;
+            case 'd':
+                facetracker.setFaceAlignMethod(FaceTracker::FaceShapeDlib);
                 break;
         }
     }
@@ -297,36 +313,31 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
 {
     std::vector <cv::Point> points;
     for (int i = start; i <= end; ++i) {
-        //cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),CV_FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,CV_AA);
+        //cv::putText(img,std::to_string(i),cv::Point(d.part(i).x(), d.part(i).y()),cv::FONT_HERSHEY_SIMPLEX,0.4,cv::Scalar(0,0,255),1,cv::LINE_AA);
         points.push_back(cv::Point(d.part(i).x(), d.part(i).y()));
     }
-    cv::polylines(img, points, isClosed, cv::Scalar(0,255,0), 1, CV_AA);
+    cv::polylines(img, points, isClosed, cv::Scalar(0,255,0), 1, cv::LINE_AA);
 }
 
 void render_face_shape (cv::Mat &img, const dlib::full_object_detection& d)
 {   
-    DLIB_CASSERT (
-         d.num_parts() == 68 || d.num_parts() == 5,
-         "\n\t Invalid inputs were given to this function. "
-         << "\n\t d.num_parts():  " << d.num_parts()
-     );
-
-    if(d.num_parts() == 68) {
-        draw_polyline(img, d, 0, 16);           // Jaw line
-        draw_polyline(img, d, 17, 21);          // Left eyebrow
-        draw_polyline(img, d, 22, 26);          // Right eyebrow
-        draw_polyline(img, d, 27, 30);          // Nose bridge
-        draw_polyline(img, d, 30, 35, true);    // Lower nose
-        draw_polyline(img, d, 36, 41, true);    // Left eye
-        draw_polyline(img, d, 42, 47, true);    // Right Eye
-        draw_polyline(img, d, 48, 59, true);    // Outer lip
-        draw_polyline(img, d, 60, 67, true);    // Inner lip
-    } else if(d.num_parts() == 5) {
-        draw_polyline(img, d, 0, 1);    // Left eye
-        draw_polyline(img, d, 2, 3);    // Right Eye
-        draw_polyline(img, d, 4, 4);    // Lower nose
+    if(d.num_parts() > 0) {
+        if(d.num_parts() == 68) {
+            draw_polyline(img, d, 0, 16);           // Jaw line
+            draw_polyline(img, d, 17, 21);          // Left eyebrow
+            draw_polyline(img, d, 22, 26);          // Right eyebrow
+            draw_polyline(img, d, 27, 30);          // Nose bridge
+            draw_polyline(img, d, 30, 35, true);    // Lower nose
+            draw_polyline(img, d, 36, 41, true);    // Left eye
+            draw_polyline(img, d, 42, 47, true);    // Right Eye
+            draw_polyline(img, d, 48, 59, true);    // Outer lip
+            draw_polyline(img, d, 60, 67, true);    // Inner lip
+        } else if(d.num_parts() == 5) {
+            draw_polyline(img, d, 0, 1);    // Left eye
+            draw_polyline(img, d, 2, 3);    // Right Eye
+            draw_polyline(img, d, 4, 4);    // Lower nose
+        }
     }
-
 }
 
 void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const std::vector<const float *> _data, const int _datalength, float _ymax, float _ymin, const std::vector<cv::Scalar> &_colors)
@@ -349,7 +360,7 @@ void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const 
         float _tickstepY = static_cast<float>(_windowsize.height)/ _ticksY ;
         for(int i = 1; i < _ticksY ; i++) {
             cv::line(_colorplot, cv::Point2f(0,i*_tickstepY), cv::Point2f(_colorplot.cols,i*_tickstepY), _coordcolor, 1);
-            cv::putText(_colorplot, num2str(_ymax - i * (_ymax-_ymin)/_ticksY), cv::Point(5, i*_tickstepY - 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, _fontcolor, 1, CV_AA);
+            cv::putText(_colorplot, num2str(_ymax - i * (_ymax-_ymin)/_ticksY), cv::Point(5, i*_tickstepY - 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, _fontcolor, 1, cv::LINE_AA);
         }
 
         float invstepY = (_ymax - _ymin) / _windowsize.height;
@@ -360,7 +371,7 @@ void drawDataWindow(const cv::String &_title, const cv::Size _windowsize, const 
             for(int i = 0; i < _datalength - 1; i++) {
                 cv::line(_colorplot, cv::Point2f(i*stepX, _windowsize.height - (_curve[i] - _ymin)/invstepY),
                          cv::Point2f((i+1)*stepX, _windowsize.height - (_curve[i+1] - _ymin)/invstepY),
-                        _colors[c], 1, CV_AA);
+                        _colors[c], 1, cv::LINE_AA);
             }
         }
 

@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
     cv::VideoWriter videowriter;
     if(outputVideofilename)
-        if(videowriter.open(outputVideofilename, CV_FOURCC('M','P','4','2'), 1000.0/framePeriod, cv::Size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT))) == false)
+        if(videowriter.open(outputVideofilename, cv::VideoWriter::fourcc('M','P','4','2'), 1000.0/framePeriod, cv::Size(capture.get(cv::CAP_PROP_FRAME_WIDTH), capture.get(cv::CAP_PROP_FRAME_HEIGHT))) == false)
             std::cout << "Warning! Output videofile can not be opened!" << std::endl;
 
     cv::Mat frame;
@@ -180,25 +180,25 @@ int main(int argc, char *argv[])
                 for(int i = 0; i < length - 1; i++) {
                     p1 = cv::Point2f(shiftX + stepX * i, shiftY + stepY * vS[i]);
                     p2 = cv::Point2f(shiftX + stepX * (i + 1), shiftY + stepY * vS[i + 1]);
-                    cv::line(frame, p1, p2, cv::Scalar(0,255,0), 1, CV_AA);
+                    cv::line(frame, p1, p2, cv::Scalar(0,255,0), 1, cv::LINE_AA);
                 }
 
-                cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(0,0,0), 1, CV_AA);
-                cv::rectangle(frame,faceproc.getFaceRect()-cv::Point(1,1),cv::Scalar(255,255,255), 1, CV_AA);
+                cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(0,0,0), 1, cv::LINE_AA);
+                cv::rectangle(frame,faceproc.getFaceRect()-cv::Point(1,1),cv::Scalar(255,255,255), 1, cv::LINE_AA);
 
-                cv::putText(frame, "HR [bpm]:", cv::Point(11, 31), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, "HR [bpm]:", cv::Point(10, 30), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+                cv::putText(frame, "HR [bpm]:", cv::Point(11, 31), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+                cv::putText(frame, "HR [bpm]:", cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, cv::LINE_AA);
 
                 std::string _freqstr = num2str(frequency);
-                cv::putText(frame, _freqstr, cv::Point(101, 35), CV_FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, _freqstr, cv::Point(100, 34), CV_FONT_HERSHEY_SIMPLEX, 1.2, ( frequency > 65 && frequency < 85) ? cv::Scalar(0,230,0) : cv::Scalar(0,0,230), 1, CV_AA);
+                cv::putText(frame, _freqstr, cv::Point(101, 35), cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+                cv::putText(frame, _freqstr, cv::Point(100, 34), cv::FONT_HERSHEY_SIMPLEX, 1.2, ( frequency > 65 && frequency < 85) ? cv::Scalar(0,230,0) : cv::Scalar(0,0,230), 1, cv::LINE_AA);
 
                 std::string _snrstr = "snr: " + num2str(snr,2) + " dB";
-                cv::putText(frame, _snrstr, cv::Point(11, 61), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-                cv::putText(frame, _snrstr, cv::Point(10, 60), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+                cv::putText(frame, _snrstr, cv::Point(11, 61), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+                cv::putText(frame, _snrstr, cv::Point(10, 60), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, cv::LINE_AA);
             }
-            cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(11, frame.rows - 10), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, CV_AA);
-            cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(10, frame.rows - 11), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, CV_AA);
+            cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(11, frame.rows - 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1, cv::LINE_AA);
+            cv::putText(frame, num2str(t,1) + " ms, press ESC to exit or 's' to get DirectShow settings", cv::Point(10, frame.rows - 11), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1, cv::LINE_AA);
 
             cv::namedWindow(APP_NAME, cv::WINDOW_NORMAL);
             cv::imshow(APP_NAME, frame);
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
             break;
         else switch(c) {
             case 's':
-                capture.set(CV_CAP_PROP_SETTINGS,0.0);
+                capture.set(cv::CAP_PROP_SETTINGS,0.0);
                 break;
         }
 
