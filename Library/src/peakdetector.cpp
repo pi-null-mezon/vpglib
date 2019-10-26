@@ -19,7 +19,7 @@
 
 namespace vpg {
 
-PeakDetector::PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms)
+PeakDetector::PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms)
 {
     __init(_signallength, _intervalslength, _intervalssubsetvolume, _dT_ms);
 }
@@ -33,14 +33,14 @@ PeakDetector::~PeakDetector()
     delete[] v_Intervals;
 }
 
-void PeakDetector::update(double value, double time)
+void PeakDetector::update(float value, float time)
 {
     // Memorize signal count
     v_S[curposforsignal] = value;
     v_T[curposforsignal] = time;
 
     // Evaluate derivative with smooth
-    v_DS[curposforsignal] = ( (v_S[curposforsignal] - v_S[__loop(curposforsignal-1)]) + v_DS[__loop(curposforsignal-1)] ) / 2.0;
+    v_DS[curposforsignal] = ( (v_S[curposforsignal] - v_S[__loop(curposforsignal-1)]) + v_DS[__loop(curposforsignal-1)] ) / 2.0f;
 
     // Check if derivative has crossed zero, 4 counts is used for noise protection
     if(v_DS[curposforsignal] > 0.0 && v_DS[__loop(curposforsignal-1)] > 0.0 && v_DS[__loop(curposforsignal-3)] < 0.0 && v_DS[__loop(curposforsignal-4)] < 0.0) {
@@ -58,7 +58,6 @@ void PeakDetector::update(double value, double time)
 
 
     if(v_BS[__loop(curposforsignal-2)] == 1 && v_BS[__loop(curposforsignal-3)] == -1) {
-
         __updateInterval( __getDuration(lastfrontposition, __loop(curposforsignal - 2)));
         lastfrontposition = __loop(curposforsignal - 2);
     }
@@ -66,12 +65,12 @@ void PeakDetector::update(double value, double time)
     curposforsignal = (curposforsignal + 1) % m_signallength;
 }
 
-const double *PeakDetector::getIntervalsVector() const
+const float *PeakDetector::getIntervalsVector() const
 {
     return v_Intervals;
 }
 
-const double *PeakDetector::getBinarySignal() const
+const float *PeakDetector::getBinarySignal() const
 {
     return v_BS;
 }
@@ -86,7 +85,7 @@ int PeakDetector::getIntervalsLength() const
     return m_intervalslength;
 }
 
-double PeakDetector::getCurrentInterval() const
+float PeakDetector::getCurrentInterval() const
 {
     return v_Intervals[__seek(curposforinterval-1)];
 }
@@ -96,39 +95,34 @@ int PeakDetector::getIntervalsPosition() const
     return curposforinterval;
 }
 
-double PeakDetector::averageCardiointervalms(int _n) const
+float PeakDetector::averageCardiointervalms(int _n) const
 {
-    if(_n == 0) {
-        return 0.0;
-    }
+    if(_n == 0)
+        return 0.0f;
 
-    if(_n < 0) {
-        _n = getIntervalsLength();
-    }
-    double _tms = 0.0;
+    if(_n < 0)
+        _n = getIntervalsLength();    
+    float _tms = 0.0f;
     int _startpos = curposforinterval - 1;
-    for(int i = 0; i < _n; ++i) {
+    for(int i = 0; i < _n; ++i)
         _tms += v_Intervals[__seek(_startpos - i)];
-    }
     return _tms / _n;
 }
 
-double PeakDetector::computeBSI()
+float PeakDetector::computeBSI()
 {
-    std::vector<double> _vci(getIntervalsVector(),getIntervalsVector() + getIntervalsLength());
+    std::vector<float> _vci(getIntervalsVector(),getIntervalsVector() + getIntervalsLength());
     std::nth_element(_vci.begin(),_vci.begin()+_vci.size()/2,_vci.end());
-    double _median = _vci[_vci.size()/2];
+    const float &_median = _vci[_vci.size()/2];
     uint _blobsize = 0;
-    for(size_t i = 0; i < _vci.size(); ++i) {
-        if(std::abs(_vci[i] - _median) < 25.0) { // 25 millisecond is a half width of a CI histogram blob
-            _blobsize++;
-        }
-    }
+    for(size_t i = 0; i < _vci.size(); ++i)
+        if(std::abs(_vci[i] - _median) < 25.0) // 25 millisecond is a half width of a CI histogram blob
+            _blobsize++;           
     auto _minmax = std::minmax_element(_vci.begin(),_vci.end());
-    return (100.0*_blobsize/_vci.size()) / ((2.0 * _median * (*_minmax.second - *_minmax.first))/1.0E6);
+    return (100.0f*_blobsize / _vci.size()) / ((2.0f * _median * (*_minmax.second - *_minmax.first))/1.0E6f);
 }
 
-void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, double _dT_ms)
+void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms)
 {
     curposforsignal = 0;
     curposforinterval = 0;
@@ -138,30 +132,29 @@ void PeakDetector::__init(int _signallength, int _intervalslength, int _interval
     m_signallength = _signallength;
     m_intervalslength = _intervalslength;
 
-    v_S = new double[m_signallength];
-    v_T = new double[m_signallength];
-    v_DS = new double[m_signallength];
-    v_BS = new double[m_signallength];
+    v_S = new float[m_signallength];
+    v_T = new float[m_signallength];
+    v_DS = new float[m_signallength];
+    v_BS = new float[m_signallength];
     for(int i = 0; i < m_signallength; i++) {
-        v_S[i] = 0.0;
-        v_T[i] = _dT_ms;
-        v_DS[i] = 0.0;
-        v_BS[i] = 0;
+        v_S[i]  = 0.0f;
+        v_T[i]  = _dT_ms;
+        v_DS[i] = 0.0f;
+        v_BS[i] = 0.0f;
     }
 
-    v_Intervals = new double[m_intervalslength];
+    v_Intervals = new float[m_intervalslength];
     for(int i = 0; i < m_intervalslength; i++)
-        v_Intervals[i] = i % 2 ? 200.0 : 1000.0;
+        v_Intervals[i] = i % 2 ? 200.0f : 1000.0f;
 }
 
-void PeakDetector::__updateInterval(double _duration)
+void PeakDetector::__updateInterval(float _duration)
 {
-    double _mean = 0.0;
-    for(int i = 0; i < m_intervalssubsetvolume; i++) {
-        _mean += v_Intervals[__seek(curposforinterval - 1 - i)];
-    }
+    float _mean = 0.0;
+    for(int i = 0; i < m_intervalssubsetvolume; i++)
+        _mean += v_Intervals[__seek(curposforinterval - 1 - i)];    
     _mean /= m_intervalssubsetvolume;
-    double _sko = 0.0;
+    float _sko = 0.0;
     int _pos;
     for(int i = 0; i < m_intervalssubsetvolume; i++) {
         _pos = __seek(curposforinterval - 1 - i);
@@ -169,19 +162,17 @@ void PeakDetector::__updateInterval(double _duration)
     }
     _sko = std::sqrt( _sko/(m_intervalssubsetvolume - 1) );
 
-    if( std::abs(_duration - _mean) > (3.0 * _sko) ) {
-        //std::cout << "mean wins (m " << _mean << ", s " << _sko << ")" << std::endl;
+    if( std::abs(_duration - _mean) > (3.0f * _sko) ) {
         return;
     } else {
         v_Intervals[curposforinterval] = _duration;
-        //std::cout << "duration " << _duration << "(m " << _mean << ", s " << _sko << ")"<<  std::endl;
         curposforinterval = (curposforinterval + 1) % m_intervalslength;
     }    
 }
 
-double PeakDetector::__getDuration(int start, int stop)
+float PeakDetector::__getDuration(int start, int stop)
 {
-    double _duration = 0.0;
+    float _duration = 0.0;
     int steps = (stop > start) ? (stop - start) : (stop + m_signallength - start);
     for(int i = 0; i < steps; i++)
         _duration += v_T[__loop(stop - i)];

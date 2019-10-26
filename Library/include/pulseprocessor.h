@@ -54,7 +54,7 @@ public:
      * @param dT_ms - discretization period in milliseconds
      * @param type - type of desired pulse frequency source/range
      */
-    PulseProcessor(double dT_ms = 33.0, ProcessType type = HeartRate);
+    PulseProcessor(float dT_ms = 33.0f, ProcessType type=HeartRate);
     /**
      * Overloaded constructor
      * @param Tov_ms - length of signal record in time domain in milliseconds
@@ -62,7 +62,7 @@ public:
      * @param dT_ms - discretization period in milliseconds
      * @param type - type of desired pulse frequency source/range
      */
-    PulseProcessor(double Tov_ms, double Tcn_ms, double Tlpf_ms,  double dT_ms, ProcessType type);
+    PulseProcessor(float Tov_ms, float Tcn_ms, float Tlpf_ms,  float dT_ms, ProcessType type);
     /**
      * Class destructor
      */
@@ -74,12 +74,12 @@ public:
      * @param filter - apply filtering of the input values
      * @note function should be called at each video frame
      */
-    void update(double value, double time, bool filter=true);
+    void update(float value, float time, bool filter=true);
     /**
      * Compute heart rate
      * @return heart rate in beats per minute
      */
-    double computeFrequency();
+    float computeFrequency();
     /**
      * Get signal length
      * @return signal length
@@ -94,22 +94,27 @@ public:
      * @brief get pointer to signal counts
      * @return pointer to data
      */
-    const double *getSignal() const;
+    const float *getSignal() const;
     /**
      * @brief get last frequency estimation
      * @return frequency
      */
-    double getFrequency() const;
+    float getFrequency() const;
     /**
      * @brief get last snr estimation
      * @return relation between pulse and noise harmonics energies
      */
-    double getSNR() const;     
+    float getSNR() const;
     /**
      * @brief use this function to get last one VPG signal sample value
      * @return value of the centered and normalized VPG signal
      */
-    double getSignalSampleValue() const;
+    float getSignalSampleValue() const;
+    /**
+     * @brief use this function to get raw signal's stdev
+     * @return standard deviation of the raw signal
+     */
+    float getSignalStdev() const;
     /**
      * @brief setPeakDetector - set up particular peak detector that will be updated within processing pipeline
      * @param pointer - self explained
@@ -120,22 +125,23 @@ private:
 
     int __loop(int d) const;
     int __seek(int d) const;
-    void __init(double Tov_ms, double Tcn_ms, double Tlpf_ms, double dT_ms, ProcessType type);
+    void __init(float Tov_ms, float Tcn_ms, float Tlpf_ms, float dT_ms, ProcessType type);
 
-    double *v_raw;
-    double *v_time;
-    double *v_Y;
-    double *v_X;
-    double *v_FA;
+    float *v_raw;
+    float *v_time;
+    float *v_Y;
+    float *v_X;
+    float *v_FA;
     int m_interval;
     int m_length;
     int m_filterlength;
     int curpos;
-    double m_bottomFrequencyLimit;
-    double m_topFrequencyLimit;    
-    double m_snr;
-    double m_Frequency;
-    double m_dTms;
+    float m_bottomFrequencyLimit;
+    float m_topFrequencyLimit;
+    float m_snr;
+    float m_Frequency;
+    float m_dTms;
+    float m_stdev;
 
     cv::Mat v_datamat;
     cv::Mat v_dftmat;

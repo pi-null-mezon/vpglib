@@ -22,28 +22,11 @@ win32 {
 }
 
 linux {
-
     #if Dlib had been built with OpenBLAS
-    #CONFIG += openblasbackend
+    CONFIG += openblasbackend
     openblasbackend {
         message(OpenBLAS backend enabled)
         LIBS += -lopenblas
-    }
-
-    # if Dlib had been built with CUDA
-    CONFIG += cudabackend
-    cudabackend {
-        message(CUDA backend enabled)
-        LIBS += -L/usr/local/cuda-9.1/lib64
-        LIBS += -lcudnn \
-                -lpthread \
-                -lcuda \
-                -lcudart \
-                -lcublas \
-                -lcurand \
-                -lcusolver \
-                -ljpeg \
-                -lpng
     }
 }
 

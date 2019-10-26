@@ -4,35 +4,51 @@ VPGLIB is the library for the blood pulse extraction from the video of the human
 
 **How to use:**
 ```c++
-#include "vpg.h"
-...
-cv::VideoCapture capture;
+#include <iostream>
 
-if(capture.open(0)) { // open default video capture device	
-	vpg::FaceProcessor faceproc(CASCADE_FILENAME); // CASCADE_FILENAME is a path to haarcascade or lbpcascade for the face detection
-	double framePeriod = faceproc.measureFramePeriod(&capture); // measure discretization period of the video in milliseconds
-	vpg::PulseProcessor pulseproc(framePeriod); // object that performs harmonic analysis of vpg-signal
-	cv::Mat frame;
-	unsigned int k = 0; // it is counter of enrolled frames
-	double s = 0.0, t = 0.0; // this is variables for temporal results storing ('s' for vpg-signal count, 't' for actual frame time)
-	while(true) {
-		if(capture.read(frame)) {
-			faceproc.enrollImage(frame, s, t); // perform face detection, then skin detection, then average skin pixels
-			pulseproc.update(s,t); // update vpg-signal
-			cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(255,255,255)); // draw target rect
-			cv::imshow("Video probe", frame);
-	        }
-	        if(k % 64 == 0) {
-		        std::printf("\nHR measurement: %d bpm\n\n", pulseproc.computeFrequency()); // compute and print heart rate estimation
-		}
-	        k++;
-		int c = cv::waitKey(1.0); // enroll user input
-		if( (char)c == '27' )  {// use need to press escape for the exit 
-			break;
-		}
-	}
+using namespace std;
+
+#include "vpg.h"
+
+int main()
+{
+    cv::VideoCapture capture;
+    // open default video capture device
+    if(capture.open(0)) {
+        // CASCADE_FILENAME is a path to haarcascade or lbpcascade file for the face detection
+        vpg::FaceProcessor faceproc(CASCADE_FILENAME);
+        // measure discretization period of the video
+        float framePeriod = faceproc.measureFramePeriod(&capture);
+        printf("measured frame period: %.2f ms",framePeriod);
+        // create object that performs harmonic analysis of vpg-signal
+        vpg::PulseProcessor pulseproc(framePeriod);
+        cv::Mat frame;
+        unsigned int k = 0; // frame counter
+        float s = 0.0, t = 0.0; // 's' for vpg-signal count, 't' for actual frame time
+        while(true) {
+            if(capture.read(frame)) {
+                // perform frame enrollment
+                faceproc.enrollImage(frame, s, t);
+                // update vpg-signal if face tracked
+                if(faceproc.getFaceRect().area() > 0) {
+                    pulseproc.update(s,t);
+                    // draw rect for tracked face
+                    cv::rectangle(frame,faceproc.getFaceRect(),cv::Scalar(127,255,127),1,CV_AA);
+                    // periodically compute heart rate estimation
+                    if(k % 64 == 0)
+                        printf("\nHR measurement: %.0f bpm", pulseproc.computeFrequency());
+                }
+                cv::imshow("Video probe", frame);
+            }
+            // increment counter
+            k++;
+            // exit if user pressed 'escape'
+            if( cv::waitKey(1) == 27 )
+                break;
+        }
+    }
+    return 0;
 }
-...
 ```	
 **Dependencies:**
 1. [OpenCV](https://github.com/opencv/opencv)

@@ -17,6 +17,8 @@
  */
 #include "faceprocessor.h"
 
+#define FACE_PROCESSOR_LENGTH 33
+
 namespace vpg {
 
 FaceProcessor::FaceProcessor(const std::string &filename)
@@ -44,27 +46,27 @@ FaceProcessor::~FaceProcessor()
     delete[] v_rects;
 }
 
-void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &resT)
+void FaceProcessor::enrollImage(const cv::Mat &rgbImage, float &resV, float &resT)
 {
     cv::Mat img;
-    double scaleX = 1.0, scaleY = 1.0;
+    float scaleX = 1.0f, scaleY = 1.0f;
     if(rgbImage.cols > 640 || rgbImage.rows > 480) {
         if( ((float)rgbImage.cols/rgbImage.rows) > 14.0/9.0 ) {
-            cv::resize(rgbImage, img, cv::Size(640, 360), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (double)rgbImage.cols / 640.0;
-            scaleY = (double)rgbImage.rows / 360.0;
+            cv::resize(rgbImage, img, cv::Size(640, 360), 0.0, 0.0, cv::INTER_AREA);
+            scaleX = (float)rgbImage.cols / 640.0f;
+            scaleY = (float)rgbImage.rows / 360.0f;
         } else if ( ((float)rgbImage.cols/rgbImage.rows) > 1.0) {
-            cv::resize(rgbImage, img, cv::Size(640, 480), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (double)rgbImage.cols / 640.0;
-            scaleY = (double)rgbImage.rows / 480.0;
+            cv::resize(rgbImage, img, cv::Size(640, 480), 0.0, 0.0, cv::INTER_AREA);
+            scaleX = (float)rgbImage.cols / 640.0f;
+            scaleY = (float)rgbImage.rows / 480.0f;
         } else if ( ((float)rgbImage.rows/rgbImage.cols) > 14.0/9.0) {
-            cv::resize(rgbImage, img, cv::Size(360, 640), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (double)rgbImage.cols / 360.0;
-            scaleY = (double)rgbImage.rows / 640.0;
+            cv::resize(rgbImage, img, cv::Size(360, 640), 0.0, 0.0, cv::INTER_AREA);
+            scaleX = (float)rgbImage.cols / 360.0f;
+            scaleY = (float)rgbImage.rows / 640.0f;
         } else {
-            cv::resize(rgbImage, img, cv::Size(480, 640), 0.0, 0.0, CV_INTER_AREA);
-            scaleX = (double)rgbImage.cols / 480.0;
-            scaleY = (double)rgbImage.rows / 640.0;
+            cv::resize(rgbImage, img, cv::Size(480, 640), 0.0, 0.0, cv::INTER_AREA);
+            scaleX = (float)rgbImage.cols / 480.0f;
+            scaleY = (float)rgbImage.rows / 640.0f;
         }
     } else {
         img = rgbImage;
@@ -103,14 +105,14 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
         int X = m_ellRect.x;
         W = m_ellRect.width;
         unsigned char *ptr;
-        unsigned char tR = 0, tG = 0, tB = 0;
+        unsigned char /*tR = 0,*/ tG = 0/*, tB = 0*/;
         #pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
         for(int j = 0; j < H; j++) {
             ptr = region.ptr(j);
             for(int i = X; i < X + W; i++) {
-                tB = ptr[3*i];
+                //tB = ptr[3*i];
                 tG = ptr[3*i+1];
-                tR = ptr[3*i+2];
+                //tR = ptr[3*i+2];
                 if( /*__skinColor(tR, tG, tB) &&*/ __insideEllipse(i, j)) {
                     area++;
                     green += tG;
@@ -119,16 +121,15 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, double &resV, double &r
         }
     }
 
-    resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
+    resT = static_cast<float>(1000.0*(cv::getTickCount() -  m_markTime) / cv::getTickFrequency());
     m_markTime = cv::getTickCount();
-    if(area > static_cast<unsigned long>(m_minFaceSize.area()/2)) {
-        resV = (double)green / area;
-    } else {
-        resV = 0.0;
-    }
+    if(area > static_cast<unsigned long>(m_minFaceSize.area()/2))
+        resV = static_cast<float>(green) / area;
+    else
+        resV = 0.0;    
 }
 
-void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, double &resGreen, double &resBlue, double &resT, cv::Rect roirect)
+void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, float &resRed, float &resGreen, float &resBlue, float &resT, cv::Rect roirect)
 {
     if(roirect == cv::Rect()) {
         roirect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
@@ -160,20 +161,20 @@ void FaceProcessor::enrollImagePart(const cv::Mat &rgbImage, double &resRed, dou
         }
     }
 
-    resT = ((double)cv::getTickCount() -  (double)m_markTime)*1000.0 / cv::getTickFrequency();
+    resT = static_cast<float>(1000.0*(cv::getTickCount() -  m_markTime) / cv::getTickFrequency());
     m_markTime = cv::getTickCount();
     if(area > 16) {
-        resRed = ((double)red) / area;
-        resGreen = ((double)green) / area;
-        resBlue = ((double)blue) / area;
+        resRed   = static_cast<float>(red)   / area;
+        resGreen = static_cast<float>(green) / area;
+        resBlue  = static_cast<float>(blue)  / area;
     } else {
-        resRed = 0.0;
-        resGreen = 0.0;
-        resBlue = 0.0;
+        resRed   = 0.0f;
+        resGreen = 0.0f;
+        resBlue  = 0.0f;
     }
 }
 
-void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double *v_resGreen, double *v_resBlue, double &resT)
+void FaceProcessor::enrollFace(const cv::Mat &rgbImage, float *v_resRed, float *v_resGreen, float *v_resBlue, float &resT)
 {
     cv::Rect faceRect = cv::Rect(0,0,rgbImage.cols,rgbImage.rows);
 
@@ -237,17 +238,17 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
         }
     }
 
-    resT = ((double)cv::getTickCount() - (double)m_markTime)*1000.0 / cv::getTickFrequency();
+    resT = static_cast<float>(1000.0*(cv::getTickCount() -  m_markTime) / cv::getTickFrequency());
     m_markTime = cv::getTickCount();
     for(int i = 0; i < 4; i++) {
         if(a[i] > static_cast<unsigned long>(m_minFaceSize.area()/8)) {
-            v_resBlue[i] = (double)b[i] / a[i];
-            v_resGreen[i] = (double)g[i] / a[i];
-            v_resRed[i] = (double)r[i] / a[i];
+            v_resBlue[i]  = static_cast<float>(b[i]) / a[i];
+            v_resGreen[i] = static_cast<float>(g[i]) / a[i];
+            v_resRed[i]   = static_cast<float>(r[i]) / a[i];
         } else {
-            v_resBlue[i] = 0.0;
-            v_resGreen[i] = 0.0;
-            v_resRed[i] = 0.0;
+            v_resBlue[i]  = 0.0f;
+            v_resGreen[i] = 0.0f;
+            v_resRed[i]   = 0.0f;
         }
     }
 }
@@ -255,7 +256,7 @@ void FaceProcessor::enrollFace(const cv::Mat &rgbImage, double *v_resRed, double
 
 cv::Rect FaceProcessor::__getMeanRect() const
 {
-    double x = 0.0, y = 0.0, w = 0.0, h = 0.0;
+    float x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
     for(int i = 0; i < FACE_PROCESSOR_LENGTH; i++) {
         x += v_rects[i].x;
         y += v_rects[i].y;
@@ -275,28 +276,27 @@ bool FaceProcessor::loadClassifier(const std::string &filename)
     return m_classifier.load(filename);
 }
 
-double FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
+float FaceProcessor::measureFramePeriod(cv::VideoCapture *_vcptr)
 {
     //Check if video source is opened
     if(_vcptr->isOpened() == false)
-        return -1.0;
+        return -1.0f;
     // We need to chek if videosource represents videofile or videocapturing device
     if(_vcptr->get(cv::CAP_PROP_FRAME_COUNT) <= 0) { // video source is a video device
-        int _iterations = 35;
-        double _timeaccum = 0.0, _time = 0.0, _value = 0.0;
+        const int _iterations = 35, _framestodrop = 5;
+        float _timeaccum = 0.0, _time = 0.0, _value = 0.0;
         cv::Mat _frame;
         dropTimer();
         for(int i = 0; i < _iterations; i++) {
             if(_vcptr->read(_frame)) {
                 enrollImage(_frame,_value,_time);
-                if(i > 4) { // exclude first counts that could be delayed
-                    _timeaccum += _time;
-                }
+                if(i >= _framestodrop) // exclude several frames in the begining because they could be delayed
+                    _timeaccum += _time;                
             }
         }
-        return _timeaccum / (_iterations - 5);
+        return _timeaccum / (_iterations - _framestodrop);
     } else { // video source is a video file
-        return 1000.0 / _vcptr->get(cv::CAP_PROP_FPS);
+        return 1000.0f / static_cast<float>(_vcptr->get(cv::CAP_PROP_FPS));
     }
 }
 
@@ -323,9 +323,9 @@ void FaceProcessor::__updateRects(const cv::Rect &rect)
 
 bool FaceProcessor::__insideEllipse(int x, int y) const
 {
-    double cx = (m_ellRect.x + m_ellRect.width / 2.0 - x) / (m_ellRect.width / 2.0);
-    double cy = (m_ellRect.y + m_ellRect.height / 2.0 - y) / (m_ellRect.height / 2.0);
-    if( (cx*cx + cy*cy) < 1.0 )
+    float cx = (m_ellRect.x + m_ellRect.width / 2.0f - x) / (m_ellRect.width / 2.0f);
+    float cy = (m_ellRect.y + m_ellRect.height / 2.0f - y) / (m_ellRect.height / 2.0f);
+    if( (cx*cx + cy*cy) < 1.0f )
         return true;
     else
         return false;

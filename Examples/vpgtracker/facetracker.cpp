@@ -10,7 +10,7 @@ FaceTracker::FaceTracker(uchar length, AlignMethod method) :
     m_pos(0),
     m_angle(0.0),    
     m_method(method),    
-    m_minNeighbours(7),
+    m_minNeighbours(5),
     m_xPortion(1.0f),
     m_yPortion(1.0f),
     m_xShift(0.0f),
@@ -18,7 +18,7 @@ FaceTracker::FaceTracker(uchar length, AlignMethod method) :
     m_primaryfacedetectortupe(FaceTracker::ViolaJones)
 {
     v_rectHistory = new cv::Rect[m_historyLength];
-    setMinFaceSize(cv::Size(80,80));
+    setMinFaceSize(cv::Size(110,110));
     clearMetaData();
     resetHistory();
     v_metaID.resize(2);
@@ -42,6 +42,11 @@ bool FaceTracker::setEyeClassifier(cv::CascadeClassifier *pointer)
     return !pt_eyeClassifier->empty();
 }
 
+void FaceTracker::setFaceMarker(cv::Ptr<cv::face::Facemark> ptr)
+{
+    facemarker = ptr;
+}
+
 void FaceTracker::setFaceShapeDetector(dlib::shape_predictor *_dlibfaceshapepredictor)
 {
     pt_dlibfaceshapepredictor = _dlibfaceshapepredictor;
@@ -59,11 +64,11 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
         if(relation > (14.0 / 9.0)) {
             xScale = (float)img.cols / 640.0f;
             yScale = (float)img.rows / 360.0f;
-            cv::resize(img, image, cv::Size(640, 360), 0.0, 0.0, CV_INTER_AREA);
+            cv::resize(img, image, cv::Size(640, 360), 0.0, 0.0, cv::INTER_AREA);
         } else {
             xScale = (float)img.cols / 640.0f;
             yScale = (float)img.rows / 480.0f;
-            cv::resize(img, image, cv::Size(640, 480), 0.0, 0.0, CV_INTER_AREA);
+            cv::resize(img, image, cv::Size(640, 480), 0.0, 0.0, cv::INTER_AREA);
         }
     } else {
         image = img.clone();
@@ -80,12 +85,12 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
             // (less than 30 ms per frame) on my work Toshiba laptop (with AMD discrete GPU),
             // but on my own Samsung notebook (more powerfull CPU and discrete NVidia GPU) it works
             // more than 30 ms per frame.
-            pt_faceClassifier->detectMultiScale(image.getUMat(cv::ACCESS_FAST), rects, 1.21, m_minNeighbours, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_CANNY_PRUNING | CV_HAAR_DO_ROUGH_SEARCH, m_minFaceSize, m_maxFaceSize );
+            pt_faceClassifier->detectMultiScale(image.getUMat(cv::ACCESS_FAST), rects, 1.3, m_minNeighbours, cv::CASCADE_FIND_BIGGEST_OBJECT, m_minFaceSize, m_maxFaceSize );
             break;
         case FaceTracker::HOG:
             cv::Mat _tmpgraymat;
             if(image.channels() == 3) {
-                cv::cvtColor(image, _tmpgraymat, CV_BGR2GRAY);
+                cv::cvtColor(image, _tmpgraymat, cv::COLOR_BGR2GRAY);
             } else {
                 _tmpgraymat = image;
             }
@@ -122,7 +127,8 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
         return m_rRect;
     }
 
-    cv::Rect faceRect = __getAverageFaceRect() & cv::Rect(0,0,image.cols,image.rows);
+    const cv::Rect frameBound = cv::Rect(0,0,image.cols,image.rows);
+    cv::Rect faceRect = __getAverageFaceRect() & frameBound;
 
     if(faceRect.area() > 0) {
         cv::Mat faceImage(image, faceRect);
@@ -134,9 +140,9 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
             }
             break;
 
-            case FaceShape: {
+            case FaceShapeDlib: {
                 dlib::cv_image<dlib::rgb_pixel> _dlibfaceimg(faceImage);
-                faceshape = (*pt_dlibfaceshapepredictor)(_dlibfaceimg, dlib::rectangle(_dlibfaceimg.nc(),_dlibfaceimg.nr()));
+                faceshape = (*pt_dlibfaceshapepredictor)(_dlibfaceimg, dlib::rectangle(faceImage.cols,faceImage.rows));
                 DLIB_CASSERT (faceshape.num_parts() == 68 || faceshape.num_parts() == 5, "\n\t Invalid inputs were given to this function. " << "\n\t d.num_parts():  " << faceshape.num_parts());
                 cv::Point2f _lefteyecenter;
                 cv::Point2f _righteyecenter;
@@ -163,19 +169,47 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
             }
             break;
 
+            case FaceShapeOpencv: {
+                std::vector<cv::Rect> _facesrects(1,cv::Rect(0,0,faceImage.cols,faceImage.rows));
+                std::vector<std::vector<cv::Point2f>> _facemarks;
+
+                if(facemarker->fit(faceImage,_facesrects,_facemarks)) {
+
+                    cv::Point2f _lefteyecenter;
+                    cv::Point2f _righteyecenter;
+                    for(size_t i = 0; i < 6; ++i) {
+                        _lefteyecenter += _facemarks[0][i+36];
+                        _righteyecenter += _facemarks[0][i+42];
+                    }
+                    _lefteyecenter /= 6;
+                    _righteyecenter /= 6;
+                    cv::Point2f peyes = _righteyecenter - _lefteyecenter;
+                    m_angle += 45.0 * std::atan(peyes.y / peyes.x) / PI_VALUE; // 180.0 produces angle jitter, and 90.0 looks more stable
+                    std::vector<dlib::point> _dlibpoints;
+                    _dlibpoints.resize(_facemarks[0].size());
+                    for(size_t i = 0; i < _dlibpoints.size(); ++i)
+                        _dlibpoints[i] = dlib::point(_facemarks[0][i].x,_facemarks[0][i].y);
+                    faceshape = dlib::full_object_detection(dlib::rectangle(faceRect.width,faceRect.height),_dlibpoints);
+                    for(size_t i = 0; i < faceshape.num_parts(); ++i) {
+                        faceshape.part(i) -= dlib::point(faceRect.width/2.0f,faceRect.height/2.0f);
+                    }
+                }
+            }
+            break;
+
             case Eyes: {
                 std::vector<cv::Rect> v_eyes;
                 cv::Point shift(faceImage.cols/20, faceImage.rows/6);
                 cv::Rect leftEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                 cv::Mat leftTopPart(faceImage, leftEyeRect + shift);
-                pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+                pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                 if(v_eyes.size() != 0) {
                     leftEyeRect = v_eyes[0] + shift;
                     cv::Point2f lep(leftEyeRect.x + leftEyeRect.width/2.0f, leftEyeRect.y + leftEyeRect.height/2.0f);
                     shift = cv::Point(faceImage.cols*9/20, faceImage.rows/6);
                     cv::Rect rightEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                     cv::Mat rightTopPart(faceImage, rightEyeRect + shift);
-                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                     if(v_eyes.size() != 0) {
                         rightEyeRect = v_eyes[0] + shift;
                         cv::Point2f rep(rightEyeRect.x + rightEyeRect.width/2.0f, rightEyeRect.y + rightEyeRect.height/2.0f);
@@ -203,7 +237,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                                 i++;
                             }
                     }
-                    cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+                    cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
                     cv::Point2d eigenvector(pca_analysis.eigenvectors.at<double>(1,0), pca_analysis.eigenvectors.at<double>(1,1));
                     m_angle += 90.0 * atan(eigenvector.y / eigenvector.x) / PI_VALUE; // 180.0 produces angle jitter, and 90.0 looks more stable
                 }
@@ -212,8 +246,8 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
 
             case Otsu: {
                 cv::Mat bw;
-                cv::cvtColor(faceImage, faceImage, CV_BGR2GRAY);
-                cv::threshold(faceImage, bw, 0.0, 255.0, CV_THRESH_BINARY | CV_THRESH_OTSU);
+                cv::cvtColor(faceImage, faceImage, cv::COLOR_BGR2GRAY);
+                cv::threshold(faceImage, bw, 0.0, 255.0, cv::THRESH_BINARY | cv::THRESH_OTSU);
                 int size = (int)(cv::sum(bw)[0]/255.0);
                 if(size > 0) {
                     cv::Mat data_pts = cv::Mat(size, 2, CV_64FC1);
@@ -228,7 +262,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                                 i++;
                             }
                     }
-                    cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+                    cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
                     cv::Point2d eigenvector(pca_analysis.eigenvectors.at<double>(0,0), pca_analysis.eigenvectors.at<double>(0,1));
                     m_angle += 90.0 * std::atan(eigenvector.x / eigenvector.y) / PI_VALUE; // 180.0 produces angle jitter, and 90.0 looks more stable
                 }
@@ -241,14 +275,14 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                 cv::Point shift(faceImage.cols/20, faceImage.rows/6);
                 cv::Rect leftEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                 cv::Mat leftTopPart(faceImage, leftEyeRect + shift);
-               pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+               pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                 if(v_eyes.size() != 0) {
                     leftEyeRect = v_eyes[0] + shift;
                     cv::Point2f lep(leftEyeRect.x + leftEyeRect.width/2.0f, leftEyeRect.y + leftEyeRect.height/2.0f);
                     shift = cv::Point(faceImage.cols*9/20, faceImage.rows/6);
                     cv::Rect rightEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                     cv::Mat rightTopPart(faceImage, rightEyeRect + shift);
-                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                     if(v_eyes.size() != 0) {
                         rightEyeRect = v_eyes[0] + shift;
                         cv::Point2f rep(rightEyeRect.x + rightEyeRect.width/2.0f, rightEyeRect.y + rightEyeRect.height/2.0f);
@@ -272,7 +306,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                                 i++;
                             }
                     }
-                    cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+                    cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
                     cv::Point2d eigenvector(pca_analysis.eigenvectors.at<double>(1,0), pca_analysis.eigenvectors.at<double>(1,1));
                     angle = (angle + (90.0 * std::atan(eigenvector.y / eigenvector.x) / PI_VALUE)) /2.0; // 180.0 produce angle jitter, and 90.0 looks more stable
                 }
@@ -285,14 +319,14 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                 cv::Point shift(faceImage.cols/20, faceImage.rows/6);
                 cv::Rect leftEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                 cv::Mat leftTopPart(faceImage, leftEyeRect + shift);
-               pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+               pt_eyeClassifier->detectMultiScale(leftTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                 if(v_eyes.size() != 0) {
                     leftEyeRect = v_eyes[0] + shift;
                     cv::Point2f lep(leftEyeRect.x + leftEyeRect.width/2.0f, leftEyeRect.y + leftEyeRect.height/2.0f);
                     shift = cv::Point(faceImage.cols*9/20, faceImage.rows/6);
                     cv::Rect rightEyeRect(0,0, faceImage.cols/2, faceImage.rows/2);
                     cv::Mat rightTopPart(faceImage, rightEyeRect + shift);
-                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  CV_HAAR_FIND_BIGGEST_OBJECT, m_minEyeSize);
+                   pt_eyeClassifier->detectMultiScale(rightTopPart.getUMat(cv::ACCESS_FAST), v_eyes, 1.1, 3,  cv::CASCADE_FIND_BIGGEST_OBJECT, m_minEyeSize);
                     if(v_eyes.size() != 0) {
                         rightEyeRect = v_eyes[0] + shift;
                         cv::Point2f rep(rightEyeRect.x + rightEyeRect.width/2.0f, rightEyeRect.y + rightEyeRect.height/2.0f);
@@ -316,7 +350,7 @@ cv::RotatedRect FaceTracker::searchFace(const cv::Mat &img)
                                     i++;
                                 }
                         }
-                        cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+                        cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
                         cv::Point2d eigenvector(pca_analysis.eigenvectors.at<double>(1,0), pca_analysis.eigenvectors.at<double>(1,1));
                         m_angle += 90.0 * std::atan(eigenvector.y / eigenvector.x) / PI_VALUE; // 180.0 produce angle jitter, and 90.0 looks more stable
                     }
@@ -361,7 +395,7 @@ cv::Mat FaceTracker::getFaceGrayImage(const cv::Mat &img)
 {
     cv::Mat grayImage;
     if(img.channels() == 3)
-        cv::cvtColor(img, grayImage, CV_BGR2GRAY);
+        cv::cvtColor(img, grayImage, cv::COLOR_BGR2GRAY);
     else
         grayImage = img;
     return getFaceImage(grayImage);
@@ -388,9 +422,9 @@ cv::Mat FaceTracker::getResizedFaceImage(const cv::Mat &img, const cv::Size &siz
             cv::Mat croppedImg(faceImg, roiRect);
             int interpolationMethod = 0;
             if(size.area() > roiRect.area())
-                interpolationMethod = CV_INTER_CUBIC;
+                interpolationMethod = cv::INTER_CUBIC;
             else
-                interpolationMethod = CV_INTER_AREA;
+                interpolationMethod = cv::INTER_AREA;
             cv::resize(croppedImg, output, size, 0, 0, interpolationMethod);
         }
     }
@@ -401,7 +435,7 @@ cv::Mat FaceTracker::getResizedGrayFaceImage(const cv::Mat &img, const cv::Size 
 {
     cv::Mat grayImage;
     if(img.channels() == 3)
-        cv::cvtColor(img, grayImage, CV_BGR2GRAY);
+        cv::cvtColor(img, grayImage, cv::COLOR_BGR2GRAY);
     else
         grayImage = img;
     return getResizedFaceImage(grayImage,size);

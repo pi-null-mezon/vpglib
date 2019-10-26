@@ -1,7 +1,7 @@
 #--------------------------------------------------------OPENCV----------------------------------------------------
 #Specify a path to the build directory of opencv library and library version
 win32 {
-    OPENCV_VERSION = 330
+    OPENCV_VERSION = 412
     OPENCV_DIR = C:/Programming/3rdParties/opencv$${OPENCV_VERSION}/build
     INCLUDEPATH += $${OPENCV_DIR}/include
 
@@ -39,7 +39,8 @@ win32 {
             -l$$qtLibraryName(opencv_imgproc$${OPENCV_VERSION}) \
             -l$$qtLibraryName(opencv_objdetect$${OPENCV_VERSION}) \
             -l$$qtLibraryName(opencv_videoio$${OPENCV_VERSION}) \
-            -l$$qtLibraryName(opencv_imgcodecs$${OPENCV_VERSION})
+            -l$$qtLibraryName(opencv_imgcodecs$${OPENCV_VERSION}) \
+            -l$$qtLibraryName(opencv_face$${OPENCV_VERSION})
 
     DEFINES += OPENCV_DATA_DIR=\\\"$${OPENCV_DIR}/../sources/data\\\"
 
@@ -47,9 +48,8 @@ win32 {
 }
 
 linux {
-    DEFINES += OPENCV_DATA_DIR=\\\"/home/pi/Programming/3rdParties/opencv310/sources/data\\\"
-    LIBS += -L/usr/local/lib
-    LIBS += -L/usr/local/bin
+    DEFINES += OPENCV_DATA_DIR=\\\"$${PWD}/../../3rdParties/opencv/data\\\"
+
     LIBS += -lopencv_core \
             -lopencv_objdetect \
             -lopencv_highgui \
@@ -57,3 +57,4 @@ linux {
             -lopencv_videoio \
             -lopencv_imgcodecs
 }
+

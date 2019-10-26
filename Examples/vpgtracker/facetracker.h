@@ -14,13 +14,15 @@
 #include <dlib/image_processing/shape_predictor.h>
 #include <dlib/opencv.h>
 
+#include <opencv2/face.hpp>
+
 class FaceTracker
 {
 public:
     /**
      * @brief The AlignMethod enum
      */
-    enum AlignMethod {Eyes, Skin, Otsu, EyesAndSkin, EyesThenSkin, FaceShape, NoAlign};
+    enum AlignMethod {Eyes, Skin, Otsu, EyesAndSkin, EyesThenSkin, FaceShapeDlib, FaceShapeOpencv, NoAlign};
     /**
      * @brief The PrimaryFaceDetector enum
      */
@@ -65,6 +67,9 @@ public:
      * @return has classifier been loaded or not
      */
     bool setEyeClassifier(cv::CascadeClassifier *pointer);
+    // Opencv facemarker
+    void setFaceMarker(cv::Ptr<cv::face::Facemark> ptr);
+    //Dlib facemarker
     void setFaceShapeDetector(dlib::shape_predictor *_dlibfaceshapepredictor);
     /**
      * @brief threshSkin
@@ -236,6 +241,7 @@ private:
     dlib::frontal_face_detector dlibfacedet;
     dlib::full_object_detection faceshape;
     PrimaryFaceDetector m_primaryfacedetectortupe;
+    cv::Ptr<cv::face::Facemark> facemarker;
 };
 
 #endif // FACETRACKER_H
