@@ -23,13 +23,29 @@ win32 {
 
 linux {
     #if Dlib had been built with OpenBLAS
-    CONFIG += openblasbackend
+    #CONFIG += openblasbackend
     openblasbackend {
         message(OpenBLAS backend enabled)
         LIBS += -lopenblas
     }
+
+    # if Dlib had been built with CUDA
+    CONFIG += cudabackend
+    cudabackend {
+        message(CUDA backend enabled)
+        LIBS += -L/usr/local/cuda/lib64
+        LIBS += -lcudnn \
+                -lpthread \
+                -llapack \
+                -lblas \
+                -lcuda \
+                -lcudart \
+                -lcublas \
+                -lcurand \
+                -lcusolver \
+                -ljpeg \
+                -lpng
+    }
 }
 
 LIBS += -ldlib
-
-DEFINES += PATH_TO_DLIB_RES=\\\"$${PATH_TO_DLIB_RESOURCES}\\\"

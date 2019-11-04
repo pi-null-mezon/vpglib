@@ -50,11 +50,14 @@ win32 {
 linux {
     DEFINES += OPENCV_DATA_DIR=\\\"$${PWD}/../../3rdParties/opencv/data\\\"
 
+    INCLUDEPATH += /usr/local/include/opencv4
+
     LIBS += -lopencv_core \
             -lopencv_objdetect \
             -lopencv_highgui \
             -lopencv_imgproc \
             -lopencv_videoio \
-            -lopencv_imgcodecs
+            -lopencv_imgcodecs \
+            -lopencv_face
 }
 

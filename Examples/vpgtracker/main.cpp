@@ -69,6 +69,9 @@ int main(int argc, char *argv[])
     if(videocapture.open(cmdargsparser.get<int>("device")) == false) {       
         std::cerr << "Can not open video device # " << cmdargsparser.get<int>("device") << "! Abort..." << std::endl;
         return 4;
+    } else {
+        videocapture.set(cv::CAP_PROP_FRAME_WIDTH,640);
+        videocapture.set(cv::CAP_PROP_FRAME_HEIGHT,480);
     }
 
     // Dlib's stuff
