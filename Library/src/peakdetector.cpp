@@ -56,7 +56,6 @@ void PeakDetector::update(float value, float time)
         v_BS[__loop(curposforsignal-2)] = v_BS[__loop(curposforsignal-3)];
     }
 
-
     if(v_BS[__loop(curposforsignal-2)] == 1 && v_BS[__loop(curposforsignal-3)] == -1) {
         __updateInterval( __getDuration(lastfrontposition, __loop(curposforsignal - 2)));
         lastfrontposition = __loop(curposforsignal - 2);
@@ -109,17 +108,41 @@ float PeakDetector::averageCardiointervalms(int _n) const
     return _tms / _n;
 }
 
-float PeakDetector::computeBSI()
+float PeakDetector::computeBSI(const float *intervals, const int length, bool filter)
 {
-    std::vector<float> _vci(getIntervalsVector(),getIntervalsVector() + getIntervalsLength());
-    std::nth_element(_vci.begin(),_vci.begin()+_vci.size()/2,_vci.end());
-    const float &_median = _vci[_vci.size()/2];
-    uint _blobsize = 0;
-    for(size_t i = 0; i < _vci.size(); ++i)
-        if(std::abs(_vci[i] - _median) < 25.0) // 25 millisecond is a half width of a CI histogram blob
-            _blobsize++;           
-    auto _minmax = std::minmax_element(_vci.begin(),_vci.end());
-    return (100.0f*_blobsize / _vci.size()) / ((2.0f * _median * (*_minmax.second - *_minmax.first))/1.0E6f);
+    if(length > 1) {
+        std::vector<float> _vci;
+        _vci.reserve(length);
+        if(filter) {
+            float mean = 0.0f;
+            for(int i = 0; i < length; ++i)
+                mean += intervals[i];
+            mean /= length;
+            float stdev = 0.0f;
+            for(int i = 0; i < length; ++i)
+                stdev += (intervals[i]-mean)*(intervals[i]-mean);
+            stdev = std::sqrt(stdev/(length - 1));
+            for(int i = 0; i < length; ++i)
+                if(std::abs(intervals[i]-mean) < 2.0f*stdev)
+                    _vci.push_back(intervals[i]);
+        } else {
+            for(int i = 0; i < length; ++i)
+                _vci.push_back(intervals[i]);
+        }
+        std::nth_element(_vci.begin(),_vci.begin()+_vci.size()/2,_vci.end());
+        const float &_median = _vci[_vci.size()/2];
+        uint _blobsize = 0;
+        for(size_t i = 0; i < _vci.size(); ++i)
+            if(std::abs(_vci[i] - _median) < 25.0f) // 25 millisecond is a half width of a CI histogram blob
+                _blobsize++;
+        auto _minmax = std::minmax_element(_vci.begin(),_vci.end());
+        /*std::cout << "max: " << *_minmax.second << std::endl
+                    << "min: " << *_minmax.first << std::endl
+                    << "med: " << _median << std::endl
+                    << "blb: " << _blobsize << std::endl;*/
+        return (100.0f*_blobsize / _vci.size()) / ((2.0f * _median * (*_minmax.second - *_minmax.first))/1.0E6f);
+    }
+    return -1;
 }
 
 void PeakDetector::__init(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms)
@@ -145,7 +168,7 @@ void PeakDetector::__init(int _signallength, int _intervalslength, int _interval
 
     v_Intervals = new float[m_intervalslength];
     for(int i = 0; i < m_intervalslength; i++)
-        v_Intervals[i] = i % 2 ? 200.0f : 1000.0f;
+        v_Intervals[i] = i % 2 ? 500.0f : 1000.0f;
 }
 
 void PeakDetector::__updateInterval(float _duration)
@@ -162,12 +185,12 @@ void PeakDetector::__updateInterval(float _duration)
     }
     _sko = std::sqrt( _sko/(m_intervalssubsetvolume - 1) );
 
-    if( std::abs(_duration - _mean) > (3.0f * _sko) ) {
+    if( std::abs(_duration - _mean) > (4.0f * _sko) ) {
         return;
     } else {
         v_Intervals[curposforinterval] = _duration;
         curposforinterval = (curposforinterval + 1) % m_intervalslength;
-    }    
+    }
 }
 
 float PeakDetector::__getDuration(int start, int stop)

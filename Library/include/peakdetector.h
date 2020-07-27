@@ -42,7 +42,7 @@ class PeakDetector
 #endif
 {
 public:
-    PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume = 11, float _dT_ms = 33.0);
+    PeakDetector(int _signallength, int _intervalslength, int _intervalssubsetvolume = 30, float _dT_ms = 33.0);
     ~PeakDetector();
 
     void update(float value, float time);
@@ -61,15 +61,16 @@ public:
      * @param _n - how many intervals should be counted (if n < 0 than full length of the v_Intervals should be counted)
      * @return average value of the cardiointerval
      */
-    float averageCardiointervalms(int _n=9) const;
+    float averageCardiointervalms(int _n=10) const;
 
     /**
      * @brief compute Bayevsky's Stress Index
-     * @param _cidata - pointer to the vector that stores cardiointervals
-     * @param _length - vector's length
+     * @param intervals - pointer to the vector that stores cardiointervals (ms)
+     * @param length - vector's length
+     * @param filter - apply 2-sigma filter before computation
      * @return index value
      */
-    float computeBSI();
+    static float computeBSI(const float *intervals, const int length, bool filter=true);
 
 private:
     void __init(int _signallength, int _intervalslength, int _intervalssubsetvolume, float _dT_ms);
