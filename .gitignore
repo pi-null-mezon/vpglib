@@ -41,4 +41,5 @@ Table data
 **/bin
 **/build
 **/Build
-
+build
+build_x64

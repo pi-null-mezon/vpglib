@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/videoio/videoio_c.h>
 #include "vpg.h"
 
 template<typename T>

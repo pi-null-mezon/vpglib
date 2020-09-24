@@ -105,20 +105,41 @@ void FaceProcessor::enrollImage(const cv::Mat &rgbImage, float &resV, float &res
         int X = m_ellRect.x;
         W = m_ellRect.width;
         unsigned char *ptr;
-        unsigned char /*tR = 0,*/ tG = 0/*, tB = 0*/;
-        #pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
-        for(int j = 0; j < H; j++) {
-            ptr = region.ptr(j);
-            for(int i = X; i < X + W; i++) {
-                //tB = ptr[3*i];
-                tG = ptr[3*i+1];
-                //tR = ptr[3*i+2];
-                if( /*__skinColor(tR, tG, tB) &&*/ __insideEllipse(i, j)) {
-                    area++;
-                    green += tG;
-                }
-            }
-        }
+		if (region.channels() == 1)
+		{
+			unsigned char tG = 0;
+#pragma omp parallel for private(ptr,tG) reduction(+:area,green)
+			for (int j = 0; j < H; j++)
+			{
+				ptr = region.ptr(j);
+				for (int i = X; i < X + W; i++) {
+					tG = ptr[3 * i + 1];
+					if (__insideEllipse(i, j)) {
+						area++;
+						green += tG;
+					}
+				}
+			}
+		}
+		else
+		{
+			unsigned char tR = 0, tG = 0, tB = 0;
+#pragma omp parallel for private(ptr,tB,tG,tR) reduction(+:area,green)
+			for (int j = 0; j < H; j++)
+			{
+				ptr = region.ptr(j);
+				for (int i = X; i < X + W; i++)
+				{
+					tB = ptr[3*i];
+					tG = ptr[3 * i + 1];
+					tR = ptr[3*i+2];
+					if (__skinColor(tR, tG, tB) && __insideEllipse(i, j)) {
+						area++;
+						green += tG;
+					}
+				}
+			}
+		}
     }
 
     resT = static_cast<float>(1000.0*(cv::getTickCount() -  m_markTime) / cv::getTickFrequency());
